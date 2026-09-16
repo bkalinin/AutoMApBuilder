@@ -1,0 +1,3 @@
+CameraTest adaptation from user-provided C:\Repositories\MapUploader\dro-map-uploader\Assets\cameratest_report_v3_gizmo_colors.cs
+Original SHA256: 3b921f17041e2cf727db1964c824d20618ea5b03dd528a0e56be798e04dc873d
+Texture/frustum helpers copied unchanged. Grid raycasts, +2m eye height, four 90-degree headings and UnityStats metrics retained. Automation control/reporting replaces manual input, screenshot and offender-report UI. The original script is not modified.

@@ -1,0 +1,53 @@
+{
+  "steam_repo": "C:\\Repositories\\MapUploader\\dro-map-uploader",
+  "unity_exe": "C:\\Program Files\\Unity\\Hub\\Editor\\2023.2.20f1\\Editor\\Unity.exe",
+  "output_root": "C:\\Users\\user\\Documents\\AutoBuildMap",
+  "unity_timeout_seconds": 7200,
+  "validation": {
+    "scan_area_mode": "auto",
+    "map_center": [
+      0,
+      0
+    ],
+    "map_size": [
+      1000,
+      1000
+    ],
+    "grid_size": 50,
+    "raycast_height": 500,
+    "camera_pitch": 0,
+    "validation_fov": 60,
+    "resolution": [
+      1920,
+      1080
+    ],
+    "max_tris": 2000000,
+    "max_draw_calls": 4000,
+    "max_textures": 140,
+    "screenshots": false,
+    "ignore_distant_outliers": true
+  },
+  "map_fixes": {
+    "disable_fog": false,
+    "hdri_distortion_none": true,
+    "validate_foliage_materials": true,
+    "auto_fix_foliage_shader": true,
+    "auto_fix_foliage_diffusion_profile": true,
+    "auto_fix_foliage_profile_registration": true,
+    "foliage_profile_path": "Assets/MapResources/Graph/Foliage.asset",
+    "foliage_profile_guid": "4ce80190f8d308243a16d19290d0b45b"
+  },
+  "playstation_repo": "C:\\Repositories\\MapUploaderPS\\dro-map-uploaderPlayStation",
+  "playstation_unity_exe": "C:\\Program Files\\Unity\\Hub\\Editor\\2023.2.20f1\\Editor\\Unity.exe",
+  "playstation_map_fixes": {
+    "foliage_profile_path": "Assets/MapResources/Graph/Foliage.asset",
+    "foliage_profile_guid": "4ce80190f8d308243a16d19290d0b45b"
+  },
+  "playstation_reflection_probe_fix": true,
+  "xbox_repo": "C:\\Repositories\\dro-map-uploaderXbox",
+  "xbox_unity_exe": "C:\\Program Files\\Unity\\Hub\\Editor\\6000.0.65f1\\Editor\\Unity.exe",
+  "xbox_map_fixes": {
+    "foliage_profile_path": "Assets/MapResources/Graph/Foliage.asset",
+    "foliage_profile_guid": "4ce80190f8d308243a16d19290d0b45b"
+  }
+}

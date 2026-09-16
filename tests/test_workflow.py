@@ -1,0 +1,149 @@
+import json
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch, MagicMock
+
+from mapcombiner.config import Config
+from mapcombiner.contracts import PipelineError, write_json
+from mapcombiner import workflow, unity_worker
+from mapcombiner.settings import SettingsStore, reset_parameters
+from mapcombiner.reports import render_run
+
+
+class WorkflowTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.package = self.root / 'map.unitypackage'
+        self.package.write_bytes(b'fixture')
+        self.config = Config.from_dict({'state_root': str(self.root / 'state'), 'output_root': str(self.root / 'output')})
+        self.calls = []
+
+    def request(self, **options):
+        return workflow.create_request(self.config, {'package': str(self.package)}, ['xbox', 'steam', 'playstation'], **options)
+
+    def runner(self, status='PASS', cleanup=True, hook=None):
+        def run(config, source, *args, **kwargs):
+            self.calls.append((kwargs['operation'], kwargs['platform']))
+            job = self.root / ('job' + str(len(self.calls)))
+            job.mkdir()
+            kwargs['on_job'](job)
+            current = status if kwargs['operation'] == 'validate' else 'PASS'
+            if kwargs['operation'] == 'validate':
+                write_json(job / 'validation.json', {'status': current, 'maxTris': 17, 'maxTextures': 150, 'testedPoints': 4})
+            if hook:
+                hook(kwargs)
+            return {'job_id': job.name, 'status': current, 'cleanup_verified': cleanup}
+        return run
+
+    def test_validation_once_then_canonical_order_and_warning_authorization(self):
+        path = self.request()
+        result = workflow.execute(path, runner=self.runner('WARNING'))
+        self.assertEqual(self.calls, [('validate', 'steam'), ('build', 'steam'), ('build', 'playstation'), ('build', 'xbox')])
+        self.assertEqual(result['status'], 'WARNING')
+        self.assertEqual(result['validation']['maxTris'], 17)
+        self.assertEqual(len(result['decisions']), 1)
+        self.assertTrue(result['decisions'][0]['at'])
+        self.assertTrue(Path(result['report_path']).is_file())
+        self.assertFalse((path.parent / '.running').exists())
+
+    def test_warning_pause_and_explicit_resume_do_not_repeat_validation(self):
+        path = self.request(ignore_warnings=False)
+        result = workflow.execute(path, runner=self.runner('WARNING'))
+        self.assertEqual(result['status'], 'NEEDS_DECISION')
+        self.assertEqual(len(self.calls), 1)
+        result = workflow.execute(path, accept_warnings=True, runner=self.runner())
+        self.assertEqual(result['status'], 'WARNING')
+        self.assertEqual(len(self.calls), 4)
+        previous = (path.parent / 'run-manifest.json').read_bytes()
+        with self.assertRaises(PipelineError):
+            workflow.execute(path, accept_warnings=True, runner=self.runner())
+        self.assertEqual(previous, (path.parent / 'run-manifest.json').read_bytes())
+
+    def test_changed_input_blocks_warning_resume(self):
+        path = self.request(ignore_warnings=False)
+        workflow.execute(path, runner=self.runner('WARNING'))
+        self.package.write_bytes(b'changed')
+        result = workflow.execute(path, accept_warnings=True, runner=self.runner())
+        self.assertEqual(result['status'], 'NeedsUserInput')
+        self.assertEqual(len(self.calls), 1)
+
+    def test_cleanup_failure_and_blocker_stop_the_queue(self):
+        for status, cleanup in [('PASS', False), ('BLOCKER', True)]:
+            with self.subTest(status=status):
+                self.calls.clear()
+                # Use a distinct fixture job path on each invocation.
+                with tempfile.TemporaryDirectory(dir=self.root) as jobs:
+                    original = self.root
+                    self.root = Path(jobs)
+                    result = workflow.execute(self.request(), runner=self.runner(status, cleanup))
+                    self.root = original
+                self.assertNotIn(result['status'], workflow.SUCCESS)
+                self.assertEqual(self.calls, [('validate', 'steam')])
+
+    def test_cancel_between_jobs_and_during_warning_pause(self):
+        path = self.request()
+        result = workflow.execute(path, runner=self.runner(hook=lambda args: args['cancel_file'].touch()))
+        self.assertEqual(result['status'], 'CANCELLED')
+        self.assertEqual(len(self.calls), 1)
+        path = self.request(ignore_warnings=False)
+        workflow.execute(path, runner=self.runner('WARNING'))
+        result = workflow.cancel(path.parent)
+        self.assertEqual(result['status'], 'CANCELLED')
+
+    def test_cancel_stops_only_the_owned_batch_process(self):
+        repo = self.root / 'repo'
+        (repo / 'ProjectSettings').mkdir(parents=True)
+        (repo / 'ProjectSettings/ProjectVersion.txt').write_text('m_EditorVersion: 2023.2.20f1')
+        executable = self.root / 'Unity.exe'
+        executable.touch()
+        job = self.root / 'worker'
+        job.mkdir()
+        cancel = self.root / 'cancel.request'
+        request = job / 'request.json'
+        write_json(request, {'cancelFile': str(cancel)})
+        config = Config.from_dict({**self.config.to_dict(), 'steam_repo': str(repo), 'unity_exe': str(executable)}).worker()
+        owned = MagicMock(pid=1234)
+        owned.poll.return_value = None
+        def spawn(*args, **kwargs):
+            cancel.touch()
+            return owned
+        with patch.object(unity_worker, 'require_idle'), patch.object(unity_worker.subprocess, 'Popen', side_effect=spawn):
+            with self.assertRaises(PipelineError) as raised:
+                unity_worker.launch(config, request, job / 'log')
+        self.assertEqual(raised.exception.status, 'CANCELLED')
+        owned.terminate.assert_called_once()
+        owned.wait.assert_called_once()
+
+    def test_settings_roundtrip_and_reset_keep_paths_and_selected_profiles(self):
+        store = SettingsStore(self.root / 'settings.json')
+        values = store.load()
+        values['config']['steam_repo'] = 'D:/My project'
+        values['config']['validation']['grid_size'] = 13
+        values['config']['map_fixes']['foliage_profile_path'] = 'Assets/User/Foliage.asset'
+        values['config']['playstation_map_fixes']['foliage_profile_guid'] = 'a' * 32
+        values['ui']['package'] = str(self.package)
+        store.save(values)
+        self.assertEqual(values, store.load())
+        result = reset_parameters(store.load())
+        self.assertEqual(result['config']['steam_repo'], 'D:/My project')
+        self.assertEqual(result['config']['map_fixes']['foliage_profile_path'], 'Assets/User/Foliage.asset')
+        self.assertEqual(result['config']['playstation_map_fixes']['foliage_profile_guid'], 'a' * 32)
+        self.assertEqual(result['config']['validation']['grid_size'], 50)
+        self.assertEqual(result['ui']['package'], str(self.package))
+        rebuilt = Config.from_dict(result['config']).to_dict()
+        self.assertEqual(Path(rebuilt['steam_repo']), Path(result['config']['steam_repo']))
+        self.assertEqual(rebuilt['validation'], result['config']['validation'])
+
+    def test_report_escapes_file_and_error_text(self):
+        html = render_run({'run_id': 'test', 'status': 'FAILED', 'message': '<script>bad</script>',
+            'inputs': {'package': '<img src=x onerror=bad>'}})
+        self.assertNotIn('<script>', html)
+        self.assertNotIn('<img', html)
+        self.assertIn('&lt;script&gt;', html)
+
+
+if __name__ == '__main__':
+    unittest.main()

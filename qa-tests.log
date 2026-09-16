@@ -1,0 +1,64 @@
+[validation] Starting normal Editor CameraTest; C:\Users\user\AppData\Local\Temp\tmp_iedrfyl
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp02cznkm0\\state\\runs\\20260916-101927-5ee830ac", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp02cznkm0\\state\\runs\\20260916-101927-5ee830ac", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp02cznkm0\\state\\runs\\20260916-101927-5ee830ac", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp02cznkm0\\state\\runs\\20260916-101927-5ee830ac", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp02cznkm0\\state\\runs\\20260916-101927-5ee830ac", "status": "CANCELLED", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp02cznkm0\\state\\runs\\20260916-101927-bc1845eb", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp02cznkm0\\state\\runs\\20260916-101927-bc1845eb", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp02cznkm0\\state\\runs\\20260916-101927-bc1845eb", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp02cznkm0\\state\\runs\\20260916-101927-bc1845eb", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp02cznkm0\\state\\runs\\20260916-101927-bc1845eb", "status": "NEEDS_DECISION", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp02cznkm0\\state\\runs\\20260916-101927-bc1845eb", "status": "CANCELLED", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp45g_w4q8\\state\\runs\\20260916-101927-84bd7cc1", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp45g_w4q8\\state\\runs\\20260916-101927-84bd7cc1", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp45g_w4q8\\state\\runs\\20260916-101927-84bd7cc1", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp45g_w4q8\\state\\runs\\20260916-101927-84bd7cc1", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp45g_w4q8\\state\\runs\\20260916-101927-84bd7cc1", "status": "NEEDS_DECISION", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp45g_w4q8\\state\\runs\\20260916-101927-84bd7cc1", "status": "NEEDS_DECISION", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp45g_w4q8\\state\\runs\\20260916-101927-84bd7cc1", "status": "NeedsUserInput", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp8v6c0tk\\state\\runs\\20260916-101927-2969fa78", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp8v6c0tk\\state\\runs\\20260916-101927-2969fa78", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp8v6c0tk\\state\\runs\\20260916-101927-2969fa78", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp8v6c0tk\\state\\runs\\20260916-101927-2969fa78", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp8v6c0tk\\state\\runs\\20260916-101927-2969fa78", "status": "FAILED", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp8v6c0tk\\state\\runs\\20260916-101927-a18e14be", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp8v6c0tk\\state\\runs\\20260916-101927-a18e14be", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp8v6c0tk\\state\\runs\\20260916-101927-a18e14be", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp8v6c0tk\\state\\runs\\20260916-101927-a18e14be", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp8v6c0tk\\state\\runs\\20260916-101927-a18e14be", "status": "BLOCKER", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpf7b81r4o\\state\\runs\\20260916-101927-e45b8acc", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpf7b81r4o\\state\\runs\\20260916-101927-e45b8acc", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpf7b81r4o\\state\\runs\\20260916-101927-e45b8acc", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpf7b81r4o\\state\\runs\\20260916-101927-e45b8acc", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpf7b81r4o\\state\\runs\\20260916-101927-e45b8acc", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpf7b81r4o\\state\\runs\\20260916-101927-e45b8acc", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpf7b81r4o\\state\\runs\\20260916-101927-e45b8acc", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpf7b81r4o\\state\\runs\\20260916-101927-e45b8acc", "status": "RUNNING", "step": "playstation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpf7b81r4o\\state\\runs\\20260916-101927-e45b8acc", "status": "RUNNING", "step": "playstation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpf7b81r4o\\state\\runs\\20260916-101927-e45b8acc", "status": "RUNNING", "step": "playstation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpf7b81r4o\\state\\runs\\20260916-101927-e45b8acc", "status": "RUNNING", "step": "xbox"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpf7b81r4o\\state\\runs\\20260916-101927-e45b8acc", "status": "RUNNING", "step": "xbox"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpf7b81r4o\\state\\runs\\20260916-101927-e45b8acc", "status": "RUNNING", "step": "xbox"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpf7b81r4o\\state\\runs\\20260916-101927-e45b8acc", "status": "WARNING", "step": "xbox"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpc2i339iz\\state\\runs\\20260916-101927-5494496c", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpc2i339iz\\state\\runs\\20260916-101927-5494496c", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpc2i339iz\\state\\runs\\20260916-101927-5494496c", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpc2i339iz\\state\\runs\\20260916-101927-5494496c", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpc2i339iz\\state\\runs\\20260916-101927-5494496c", "status": "NEEDS_DECISION", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpc2i339iz\\state\\runs\\20260916-101927-5494496c", "status": "NEEDS_DECISION", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpc2i339iz\\state\\runs\\20260916-101927-5494496c", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpc2i339iz\\state\\runs\\20260916-101927-5494496c", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpc2i339iz\\state\\runs\\20260916-101927-5494496c", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpc2i339iz\\state\\runs\\20260916-101927-5494496c", "status": "RUNNING", "step": "playstation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpc2i339iz\\state\\runs\\20260916-101927-5494496c", "status": "RUNNING", "step": "playstation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpc2i339iz\\state\\runs\\20260916-101927-5494496c", "status": "RUNNING", "step": "playstation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpc2i339iz\\state\\runs\\20260916-101927-5494496c", "status": "RUNNING", "step": "xbox"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpc2i339iz\\state\\runs\\20260916-101927-5494496c", "status": "RUNNING", "step": "xbox"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpc2i339iz\\state\\runs\\20260916-101927-5494496c", "status": "RUNNING", "step": "xbox"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpc2i339iz\\state\\runs\\20260916-101927-5494496c", "status": "WARNING", "step": "xbox"}
+.................................
+----------------------------------------------------------------------
+Ran 33 tests in 5.431s
+
+OK
