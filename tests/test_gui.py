@@ -118,6 +118,115 @@ class GuiTests(unittest.TestCase):
         self.assertEqual(self.window.area_mode.currentData(), 'auto')
         self.assertFalse(self.window.validation_fields['map_center'][0].isEnabled())
 
+    def test_modio_auto_requires_resolved_name_before_build_and_clears_on_new_map(self):
+        package = self.root / 'map.unitypackage'
+        package.touch()
+        self.window.package.setText(str(package))
+        panel = self.window.modio
+        panel.mod_id.setText('6214018')
+        panel.auto_upload.setChecked(True)
+        with patch.object(self.window, 'launch') as launch:
+            self.window.start(build_only=True)
+        launch.assert_not_called()
+        self.assertIn('Mod ID', self.window.detail.text())
+        panel.target = {'game_id': 5892, 'mod_id': 6214018, 'name': 'Tomato Sportsland'}
+        panel.token.setText('unsaved-secret-must-not-enter-json')
+        with patch.object(self.window, 'launch') as launch:
+            self.window.start(build_only=True)
+        request = launch.call_args.args[0]
+        data = request.read_text(encoding='utf-8')
+        self.assertIn('Tomato Sportsland', data)
+        self.assertNotIn('unsaved-secret', data)
+        self.assertNotIn('unsaved-secret', self.window.store.path.read_text(encoding='utf-8'))
+        self.window.package.setText(str(self.root / 'another.unitypackage'))
+        self.assertIsNone(panel.target)
+        self.assertEqual(panel.mod_id.text(), '')
+        self.assertFalse(panel.auto_upload.isChecked())
+
+    def test_modio_auto_runs_once_only_after_successful_build(self):
+        directory = self.root / 'run'
+        directory.mkdir()
+        self.window.run_directory = directory
+        target = {'game_id': 5892, 'mod_id': 6214018, 'name': 'Tomato Sportsland'}
+        row = {'step': 'steam', 'status': 'PASS', 'archive': 'fixture.zip', 'cleanup_verified': True}
+        run = {'status': 'PASS', 'jobs': [row], 'message': 'Build completed'}
+        write_json(directory / 'run-manifest.json', run)
+        self.window.auto_upload_target = target
+        with patch.object(self.window, 'read_output'), patch.object(self.window.modio, 'upload') as upload:
+            self.window.finished(0, None)
+            self.window.finished(0, None)
+        upload.assert_called_once_with(directory, self.window.settings['config']['state_root'], target, overrides={})
+        self.assertEqual(self.window.run['status'], 'PASS')
+        for status in ('FAILED', 'CANCELLED'):
+            run['status'] = status
+            write_json(directory / 'run-manifest.json', run)
+            self.window.auto_upload_target = target
+            with patch.object(self.window, 'read_output'), patch.object(self.window.modio, 'upload') as upload:
+                self.window.finished(2, None)
+            upload.assert_not_called()
+
+    def test_modio_worker_locks_controls_and_returns_resolved_name(self):
+        import time
+        panel = self.window.modio
+        panel.mod_id.setText('6214018')
+        target = {'game_id': 5892, 'mod_id': 6214018, 'name': 'Tomato Sportsland'}
+        panel._launch(lambda task: target, 'lookup')
+        self.assertFalse(self.window.build_button.isEnabled())
+        self.assertTrue(self.window.cancel_button.isEnabled())
+        until = time.monotonic() + 3
+        while panel.busy and time.monotonic() < until:
+            self.app.processEvents()
+            time.sleep(.005)
+        self.assertFalse(panel.busy)
+        self.assertEqual(panel.checked_target(), target)
+        self.assertIn('Tomato Sportsland', panel.mod_name.text())
+        self.assertTrue(self.window.build_button.isEnabled())
+
+    def test_modio_override_survives_poll_and_can_return_to_automatic(self):
+        directory = self.root / 'run'
+        self.window.run_directory = directory
+        automatic = str(self.root / 'current_PS.zip')
+        steam = str(self.root / 'earlier_Steam.zip')
+        write_json(directory / 'run-manifest.json', {'status': 'PASS', 'jobs': [
+            {'step': 'playstation', 'status': 'PASS', 'archive': automatic, 'cleanup_verified': True}]})
+        self.window.poll()
+        panel = self.window.modio
+        panel.zip_fields['steam'].set_override(steam)
+        panel.zip_fields['playstation'].set_override(str(self.root / 'other_PS.zip'))
+        self.window.poll()
+        self.assertEqual(panel.zip_fields['steam'].path.toPlainText(), steam)
+        self.assertEqual(panel.zip_fields['playstation'].path.toPlainText(), str(self.root / 'other_PS.zip'))
+        panel.zip_fields['playstation'].manual.setChecked(False)
+        self.assertEqual(panel.zip_fields['playstation'].path.toPlainText(), automatic)
+        self.assertEqual(panel.zip_overrides(), {'steam': steam})
+        self.window.package.setText(str(self.root / 'another.unitypackage'))
+        self.assertEqual(panel.zip_overrides(), {})
+        self.assertEqual(panel.zip_fields['steam'].path.toPlainText(), '')
+
+    def test_modio_manual_upload_without_build_and_auto_snapshot(self):
+        panel = self.window.modio
+        target = {'game_id': 5892, 'mod_id': 6214018, 'name': 'Tomato Sportsland'}
+        panel.mod_id.setText('6214018')
+        panel.target = target
+        selected = str(self.root / 'earlier_Steam.zip')
+        panel.zip_fields['steam'].set_override(selected)
+        self.assertTrue(panel.upload_button.isEnabled())
+        with patch.object(panel, 'upload') as upload:
+            self.window.start_upload()
+        upload.assert_called_once_with(None, self.window.settings['config']['state_root'])
+        package = self.root / 'map.unitypackage'
+        package.touch()
+        self.window.package.setText(str(package))
+        panel.mod_id.setText('6214018')
+        panel.target = target
+        panel.zip_fields['steam'].set_override(selected)
+        panel.auto_upload.setChecked(True)
+        with patch.object(self.window, 'launch') as launch:
+            self.window.start(build_only=True)
+        from mapcombiner.gui import read_json
+        request = read_json(launch.call_args.args[0])
+        self.assertEqual(request['modio_zip_overrides'], {'steam': selected})
+
 
 if __name__ == '__main__':
     unittest.main()

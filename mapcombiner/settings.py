@@ -6,12 +6,13 @@ from .contracts import write_json
 
 
 def defaults():
-    return {'schema_version': 1, 'config': Config.load().to_dict(), 'ui': {
+    return {'schema_version': 1, 'config': Config.load().to_dict(),
+        'modio': {'game_id': '5892'}, 'ui': {
         'package': '', 'scene': '', 'meta_asset': '', 'overrides_enabled': False,
         'meta': '', 'preview': '', 'icon': '', 'last_directory': '',
         'platforms': ['steam', 'playstation', 'xbox'], 'notifications': True,
         # Explicit user preference: warnings are informational and may be skipped.
-        'ignore_warnings': True, 'last_run': '',
+        'ignore_warnings': True, 'last_run': '', 'modio_mod_id': '', 'modio_auto_upload': False,
     }}
 
 

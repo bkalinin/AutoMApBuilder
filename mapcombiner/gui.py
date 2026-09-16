@@ -16,6 +16,9 @@ from .platforms import PLATFORMS
 from .recovery import is_running
 from .settings import SettingsStore, reset_parameters
 from .workflow import create_request, cancel
+from .contracts import write_json
+from .upload_ui import UploadPanel
+from .uploads import successful_artifacts
 
 ROOT = Path(__file__).resolve().parents[1]
 STATES = {'PASS': 'Готово', 'WARNING': 'Готово с предупреждениями', 'FAILED': 'Ошибка',
@@ -139,6 +142,7 @@ class MainWindow(QMainWindow):
         self.notified = None
         self.candidate_key = None
         self.cancelling = False
+        self.auto_upload_target = None
         self.setWindowTitle('CarX MapCombiner')
         self.setWindowIcon(app_icon())
         self.resize(1160, 830)
@@ -161,6 +165,14 @@ class MainWindow(QMainWindow):
         self.make_validation_tab()
         self.make_fixes_tab()
         self.make_paths_tab()
+        self.modio = UploadPanel(self.store.path, self)
+        modio_scroll = QScrollArea()
+        modio_scroll.setWidgetResizable(True)
+        modio_scroll.setWidget(self.modio)
+        self.modio_tab = self.tabs.addTab(modio_scroll, 'mod.io')
+        self.modio.busyChanged.connect(self.upload_activity_changed)
+        self.modio.uploadRequested.connect(self.start_upload)
+        self.modio.reportRequested.connect(self.open_path)
         split.addWidget(self.tabs)
         panel = QWidget()
         side = QVBoxLayout(panel)
@@ -211,7 +223,7 @@ class MainWindow(QMainWindow):
         side.addStretch()
         self.notifications = QCheckBox('Уведомлять о завершении')
         side.addWidget(self.notifications)
-        local = QLabel('Локальная обработка\n0 LLM calls · 0 API tokens')
+        local = QLabel('0 LLM calls · 0 AI tokens\nmod.io — по вашему выбору')
         local.setObjectName('hint')
         side.addWidget(local)
         split.addWidget(panel)
@@ -266,6 +278,10 @@ class MainWindow(QMainWindow):
             self.run_directory = Path(last)
             old = read_json(self.run_directory / 'run-manifest.json')
             self.notified = (last, old.get('status'))
+            report = read_json(self.run_directory / 'upload-report.json')
+            if report:
+                self.modio.report_path = str(self.run_directory / 'upload-report.html')
+                self.modio.show_report(report)
         self.timer = QTimer(self)
         self.timer.setInterval(1000)
         self.timer.timeout.connect(self.poll)
@@ -408,6 +424,8 @@ class MainWindow(QMainWindow):
                 control.setEnabled(enabled)
 
     def clear_candidates(self):
+        self.modio.clear_map()
+        self.auto_upload_target = None
         self.validation_source = None
         self.run_directory = None
         self.run = {}
@@ -445,6 +463,9 @@ class MainWindow(QMainWindow):
             check.setChecked(key in ui['platforms'])
         self.ignore_warnings.setChecked(ui['ignore_warnings'])
         self.notifications.setChecked(ui['notifications'])
+        self.modio.game_id.setText(str(self.settings['modio']['game_id']))
+        self.modio.mod_id.setText(str(ui.get('modio_mod_id', '')))
+        self.modio.auto_upload.setChecked(ui.get('modio_auto_upload', False))
         for key, field in self.paths.items():
             field.setText(config[key])
         for group, values in self.profiles.items():
@@ -484,6 +505,9 @@ class MainWindow(QMainWindow):
             for key, check in self.fixes.items():
                 config[group][key] = check.isChecked()
         config['playstation_reflection_probe_fix'] = self.probe_fix.isChecked()
+        self.settings['modio'] = {'game_id': self.modio.game_id.text().strip()}
+        ui['modio_mod_id'] = self.modio.mod_id.text().strip()
+        ui['modio_auto_upload'] = self.modio.auto_upload.isChecked()
         return self.settings
 
     def save(self):
@@ -496,8 +520,11 @@ class MainWindow(QMainWindow):
         self.detail.setText('Параметры сброшены. Пути проектов, Unity и профилей Foliage сохранены.')
 
     def start(self, validate_only=False, build_only=False):
+        if self.modio.busy or self.active_process():
+            return
         try:
             self.save()
+            target = self.modio.checked_target() if self.modio.auto_upload.isChecked() and not validate_only else None
             ui = self.settings['ui']
             if not Path(ui['package']).is_file() or Path(ui['package']).suffix.lower() != '.unitypackage':
                 raise ValueError('Выберите существующий файл .unitypackage')
@@ -512,6 +539,12 @@ class MainWindow(QMainWindow):
                 validate_only=validate_only, build_only=build_only, ignore_warnings=ui['ignore_warnings'],
                 validation_source=self.validation_source if build_only else None)
             self.run_directory = request.parent
+            self.auto_upload_target = target
+            if target:
+                data = read_json(request)
+                data['modio_upload_target'] = target  # IDs/name only; never the token.
+                data['modio_zip_overrides'] = self.modio.zip_overrides()
+                write_json(request, data)
             self.settings['ui']['last_run'] = str(self.run_directory)
             self.store.save(self.settings)
             self.run = {}
@@ -525,6 +558,8 @@ class MainWindow(QMainWindow):
             self.launch(request)
         except Exception as error:
             self.run_directory = None  # Do not let an older run overwrite the preflight reason.
+            self.modio.show_artifacts([])
+            self.modio.update_available(False)
             self.status.setText(STATES.get(getattr(error, 'status', None), 'Проверьте настройки'))
             self.detail.setText(str(error))
 
@@ -558,16 +593,31 @@ class MainWindow(QMainWindow):
             self.detail.setText('Откройте журнал. Если репозиторий был изменён, выполните восстановление.')
         elif exit_code and self.run.get('status') in ('PASS', 'WARNING'):
             self.detail.setText('Процесс завершился с ошибкой. Проверьте журнал.')
+        target, self.auto_upload_target = self.auto_upload_target, None
+        if self.run.get('status') == 'NEEDS_DECISION':
+            self.auto_upload_target = target
+        elif target and not exit_code and self.run.get('status') in ('PASS', 'WARNING') and successful_artifacts(self.run):
+            self.tabs.setCurrentIndex(self.modio_tab)
+            overrides = read_json(self.run_directory / 'request.json').get('modio_zip_overrides', {})
+            self.modio.upload(self.run_directory, self.settings['config']['state_root'], target, overrides=overrides)
 
     def resume(self):
         self.notified = None
+        request = read_json(self.run_directory / 'request.json')
+        self.auto_upload_target = request.get('modio_upload_target')
+        self.modio.set_overrides(request.get('modio_zip_overrides', {}))
         self.launch(self.run_directory / 'request.json', ['--accept-warnings'])
 
     def recover(self):
         self.notified = None
+        self.auto_upload_target = None
         self.launch(self.run_directory / 'request.json', ['--recover'])
 
     def cancel_run(self):
+        if self.modio.busy:
+            self.modio.cancel()
+            self.cancel_button.setEnabled(False)
+            return
         if self.run_directory:
             cancel(self.run_directory)
             self.cancelling = True
@@ -579,14 +629,34 @@ class MainWindow(QMainWindow):
         return self.process is not None and self.process.state() != QProcess.ProcessState.NotRunning
 
     def set_busy(self, busy, paused=False):
+        busy = busy or self.modio.busy
         self.tabs.setEnabled(not busy and not paused)
         self.reset_button.setEnabled(not busy and not paused)
         self.validate_button.setEnabled(not busy and not paused)
         self.build_button.setEnabled(not busy and not paused)
         self.build_only_button.setEnabled(not busy and not paused)
-        self.cancel_button.setEnabled((busy or paused) and not self.cancelling)
+        self.cancel_button.setEnabled((busy or paused) and not self.cancelling
+            and not (self.modio.busy and self.modio.stop.is_set()))
         self.progress.setRange(0, 0 if busy else 1)
         self.progress.setValue(0 if busy else 1)
+        artifacts = successful_artifacts(self.run) if self.run_directory else []
+        self.modio.show_artifacts(artifacts)
+        self.modio.update_available(not busy and not paused)
+
+    def upload_activity_changed(self, busy):
+        if self.run_directory:
+            self.poll()
+        else:
+            self.set_busy(False)
+
+    def start_upload(self):
+        if self.active_process() or self.modio.busy or (self.run_directory and is_running(self.run_directory)):
+            return
+        try:
+            self.save()
+            self.modio.upload(self.run_directory, self.settings['config']['state_root'])
+        except Exception as error:
+            self.modio.show_error(str(error))
 
     def poll(self):
         if not self.run_directory:
@@ -603,7 +673,7 @@ class MainWindow(QMainWindow):
         interrupted = run['status'] == 'RUNNING' and not running
         needs_recovery = interrupted or any(not row.get('cleanup_verified') for row in run.get('jobs', []))
         self.set_busy(running, paused or needs_recovery)
-        if needs_recovery and not running:
+        if needs_recovery and not running and not self.modio.busy:
             self.cancel_button.setEnabled(False)
         self.continue_button.setVisible(paused and not running)
         self.recover_button.setVisible(needs_recovery and not running)
@@ -670,7 +740,7 @@ class MainWindow(QMainWindow):
             self.detail.setText('Не удалось сохранить настройки: ' + str(error))
             event.ignore()
             return
-        if self.active_process() or (self.run_directory and is_running(self.run_directory)):
+        if self.modio.busy or self.active_process() or (self.run_directory and is_running(self.run_directory)):
             event.ignore()
             if self.tray:
                 self.hide()
