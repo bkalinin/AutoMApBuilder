@@ -16,8 +16,26 @@ SUCCESS = {'PASS', 'WARNING'}
 TERMINAL = SUCCESS | {'FAILED', 'BLOCKER', 'CANCELLED', 'NeedsUserInput'}
 
 
-def create_request(config, inputs, platforms, *, validate_only=False, ignore_warnings=True):
+def check_overrides(inputs):
+    if not inputs.get('overrides_enabled'):
+        return
+    missing = [label for key, label in (('preview', 'Preview'), ('icon', 'Preview Mini')) if not inputs.get(key, '').strip()]
+    if missing:
+        raise PipelineError('Включена замена дополнительных файлов. Укажите ' + ' и '.join(missing)
+            + ' либо отключите замену. MapMetaConfig можно оставить пустым.', 'BLOCKER')
+    for key, label in (('preview', 'Preview'), ('icon', 'Preview Mini')):
+        path = Path(inputs[key])
+        if not path.is_file():
+            raise PipelineError(f'{label}: файл не найден — {path}', 'BLOCKER')
+        if path.suffix.lower() not in {'.png', '.jpg', '.jpeg', '.tga', '.tif', '.tiff', '.bmp'}:
+            raise PipelineError(f'{label}: неподдерживаемый формат изображения — {path.suffix}', 'BLOCKER')
+
+
+def create_request(config, inputs, platforms, *, validate_only=False, build_only=False, ignore_warnings=True, validation_source=None):
     config = Config.from_dict(config) if isinstance(config, dict) else config
+    check_overrides(inputs)
+    if validate_only and build_only:
+        raise ValueError('Choose either Validate or Build')
     selected = [key for key in PLATFORMS if key in platforms]
     if set(platforms) - set(PLATFORMS) or (not validate_only and not selected):
         raise ValueError('Выберите хотя бы одну платформу')
@@ -26,7 +44,8 @@ def create_request(config, inputs, platforms, *, validate_only=False, ignore_war
     directory.mkdir(parents=True)
     path = directory / 'request.json'
     write_json(path, {'run_id': run_id, 'config': config.to_dict(), 'inputs': inputs,
-        'platforms': selected, 'validate_only': bool(validate_only), 'ignore_warnings': bool(ignore_warnings)})
+        'platforms': selected, 'validate_only': bool(validate_only), 'build_only': bool(build_only),
+        'validation_source': str(validation_source) if validation_source else '', 'ignore_warnings': bool(ignore_warnings)})
     return path
 
 
@@ -44,12 +63,12 @@ def fingerprint(inputs):
 
 
 def summary(result, step, job):
-    row = {key: result[key] for key in ('job_id', 'status', 'message', 'archive', 'archive_sha256', 'cleanup_verified', 'log_directory') if key in result}
+    row = {key: result[key] for key in ('job_id', 'status', 'message', 'archive', 'archive_sha256', 'cleanup_verified', 'log_directory', 'material_trace') if key in result}
     row.update(step=step, job_directory=str(job))
     unity = result.get('unity_result') or {}
     row['candidates'] = unity.get('candidates', [])
     fixes = result.get('map_fixes') or unity.get('mapFixes') or {}
-    row['materials'] = {key: fixes.get(key) for key in ('status', 'materialsSeen', 'treeMaterials', 'foliageMaterials', 'materialCopies', 'volumeCopies')}
+    row['materials'] = {key: fixes.get(key) for key in ('status', 'materialsSeen', 'treeMaterials', 'foliageMaterials', 'materialsEditedInPlace', 'materialCopies', 'volumeCopies')}
     path = Path(job) / 'validation.json'
     if path.exists():
         row['validation'] = json.loads(path.read_text(encoding='utf-8-sig'))
@@ -94,6 +113,7 @@ def execute(request_path, *, accept_warnings=False, runner=None):
                 'platforms': request['platforms'], 'jobs': [], 'decisions': [], 'current_job': None,
                 'current_step': 'inspect', 'runtime_llm_calls': 0, 'runtime_api_tokens': 0}
         persist(directory, run, config)
+        check_overrides(request['inputs'])
 
         def check():
             if (directory / 'cancel.request').exists():
@@ -132,7 +152,24 @@ def execute(request_path, *, accept_warnings=False, runner=None):
             check()
             return result
 
-        if not accept_warnings:
+        if request.get('build_only') and not accept_warnings:
+            verify_inputs()
+            run['build_only'] = True
+            run['decisions'].append({'at': timestamp(), 'reason': 'Пользователь выбрал «Собрать»: CameraTest не запускался'})
+            previous_path = request.get('validation_source')
+            if previous_path:
+                try:
+                    previous = json.loads((Path(previous_path) / 'run-manifest.json').read_text(encoding='utf-8-sig'))
+                except (OSError, ValueError):
+                    previous = {}
+                # Prior measurements are informational. Changed packages never inherit them;
+                # Build remains available without requiring another CameraTest.
+                if (previous.get('validation', {}).get('status') in SUCCESS
+                        and previous.get('fingerprint', {}).get('package') == run['fingerprint']['package']
+                        and previous.get('inputs', {}).get('scene', '') == request['inputs'].get('scene', '')):
+                    run['validation'] = previous['validation']
+                    run['validation_source'] = previous.get('validation_source') or str(Path(previous_path).resolve())
+        elif not accept_warnings:
             validated = do_job('validation', 'validate', 'steam')
             if request['validate_only']:
                 run.update(status=validated['status'], message='Проверка карты завершена')

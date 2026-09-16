@@ -1,1 +1,2 @@
 PySide6-Essentials==6.10.2
+UnityPy==1.25.3

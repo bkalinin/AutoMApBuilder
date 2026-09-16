@@ -10,7 +10,7 @@ namespace CarXMapCombiner
     [Serializable] public class JobRequest
     {
         public string jobId, packagePath, scenePath, metaPath, metaAssetPath, previewPath, iconPath;
-        public string[] assetPaths;
+        public string[] assetPaths, writableMaterialPaths;
         public string operation, platform;
         public bool reflectionProbeFix;
         public ValidationOptions validation;

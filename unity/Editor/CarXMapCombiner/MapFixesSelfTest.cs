@@ -82,9 +82,44 @@ namespace CarXMapCombiner
                 volume.sharedProfile = volumeSource;
                 AssetDatabase.SaveAssets();
 
+                // Regressions from the real map: generic materials on a Combined Mesh,
+                // already HDRP/Lit + Translucent + no profile. Names carry no foliage hints.
+                var imported = new Material(Shader.Find("HDRP/Lit")) { name = "m001" };
+                string importedPath = root + "/m001.mat";
+                AssetDatabase.CreateAsset(imported, importedPath);
+                imported.SetFloat("_MaterialID", 5);
+                imported.SetTexture("_BaseColorMap", texture);
+                imported.SetTextureScale("_BaseColorMap", new Vector2(7, 8));
+                imported.SetFloat("_AlphaCutoffEnable", 1);
+                HDMaterial.SetAlphaCutoff(imported, 0.42f);
+                HDMaterial.SetDiffusionProfile(imported, null);
+                HDMaterial.ValidateMaterial(imported);
+                string importedGuid = AssetDatabase.AssetPathToGUID(importedPath);
+                var protectedSource = new Material(imported) { name = "m002" };
+                AssetDatabase.CreateAsset(protectedSource, root + "/m002.mat");
+                var staleHash = new Material(imported) { name = "m003" };
+                string stalePath = root + "/m003.mat";
+                AssetDatabase.CreateAsset(staleHash, stalePath);
+                HDMaterial.SetDiffusionProfile(staleHash, foliage);
+                uint expectedHash = BitConverter.ToUInt32(BitConverter.GetBytes(staleHash.GetFloat("_DiffusionProfileHash")), 0);
+                staleHash.SetFloat("_DiffusionProfileHash", BitConverter.ToSingle(BitConverter.GetBytes(expectedHash ^ 1u), 0));
+                var combined = Renderer("Combined Mesh", imported, scene);
+                combined.sharedMaterials = new[] { imported, protectedSource, source, staleHash };
+                var anotherUse = Renderer("Merged_LOD1", imported, scene);
+                anotherUse.gameObject.SetActive(false);
+                var otherProfile = ScriptableObject.CreateInstance<DiffusionProfileSettings>();
+                AssetDatabase.CreateAsset(otherProfile, root + "/WaxProfile.asset");
+                var wax = new Material(imported) { name = "Wax" };
+                AssetDatabase.CreateAsset(wax, root + "/wax.mat");
+                HDMaterial.SetDiffusionProfile(wax, otherProfile);
+                var decoration = Renderer("Decoration", wax, scene);
+                // source is new to the map, but shared between leaf, trunk and non-tree slots.
+                // It must still be copied to keep those incompatible uses separate.
+                string[] writable = { importedPath, stalePath, AssetDatabase.GetAssetPath(source) };
+                AssetDatabase.SaveAssets();
                 var report = new MapFixReport();
                 Require(source.GetTexture("_MainTex") == texture, "fixture texture persisted before conversion");
-                MapFixes.Apply(scene, options, report, root);
+                MapFixes.Apply(scene, options, report, root, writable);
                 Require(leaves.sharedMaterial.shader.name == "HDRP/Lit", "leaf shader conversion");
                 Require(trunk.sharedMaterial.shader.name == "HDRP/Lit", "inactive LOD trunk conversion");
                 Require(poster.sharedMaterial == source && source.shader.name == "Standard", "non-tree renderer and shared source preserved");
@@ -100,8 +135,27 @@ namespace CarXMapCombiner
                 Require(volume.sharedProfile.TryGet<Fog>(out var untouchedFog) && untouchedFog.active, "Fog remains active when option is off");
                 Require(volume.sharedProfile.TryGet<HDRISky>(out var fixedSky) && fixedSky.distortionMode.value == HDRISky.DistortionMode.None, "HDRI distortion disabled");
                 Require(volume.sharedProfile.TryGet<DiffusionProfileList>(out var list) && list.diffusionProfiles.value.Contains(foliage), "scene Diffusion Profile List registration");
+                Require(combined.sharedMaterials[0] == imported && anotherUse.sharedMaterial == imported,
+                    "owned material on Combined Mesh and inactive LOD edited in place");
+                Require(AssetDatabase.GetAssetPath(imported) == importedPath && AssetDatabase.AssetPathToGUID(importedPath) == importedGuid,
+                    "owned material path and GUID retained");
+                Require(HDMaterial.GetDiffusionProfile(imported) == foliage && imported.GetFloat("_MaterialID") == 5,
+                    "generic Lit Translucent material receives explicit foliage without changing Material Type");
+                Require(imported.GetTexture("_BaseColorMap") == texture && imported.GetTextureScale("_BaseColorMap") == new Vector2(7, 8)
+                    && Mathf.Approximately(imported.GetFloat("_AlphaCutoff"), 0.42f), "in-place texture/UV/cutout retained");
+                Require(combined.sharedMaterials[1] != protectedSource && HDMaterial.GetDiffusionProfile(protectedSource) == null
+                    && HDMaterial.GetDiffusionProfile(combined.sharedMaterials[1]) == foliage, "baseline material gets a map-only copy");
+                Require(combined.sharedMaterials[2] == source && source.shader.name == "Standard", "non-foliage Combined Mesh slot preserved");
+                Require(HDMaterial.GetDiffusionProfile(decoration.sharedMaterial) == otherProfile, "unrelated existing diffusion profile preserved");
+                Require(BitConverter.ToUInt32(BitConverter.GetBytes(staleHash.GetFloat("_DiffusionProfileHash")), 0) == expectedHash,
+                    "stale shader hash repaired even when profile GUID already matches");
+                Require(report.materialsEditedInPlace == 2, "exactly two owned materials edited without copies");
+                AssetDatabase.ImportAsset(importedPath, ImportAssetOptions.ForceUpdate);
+                var reloaded = AssetDatabase.LoadAssetAtPath<Material>(importedPath);
+                Require(HDMaterial.GetDiffusionProfile(reloaded) == foliage
+                    && AssetDatabase.AssetPathToGUID(importedPath) == importedGuid, "profile survives material reload");
                 var second = new MapFixReport();
-                MapFixes.Apply(scene, options, second, root);
+                MapFixes.Apply(scene, options, second, root, writable);
                 Require(second.changes.Count == 0, "fixes must be idempotent");
                 options.disable_fog = true;
                 MapFixes.Apply(scene, options, new MapFixReport(), root);
@@ -113,7 +167,7 @@ namespace CarXMapCombiner
                 bool rejected = false;
                 try { MapFixes.ResolveProfile(options); } catch (JobException) { rejected = true; }
                 Require(rejected, "path/GUID mismatch cannot select another profile");
-                Debug.Log("Material fix self-tests PASS: scope, inactive LOD, billboard, texture/UV/cutout, profile API, volume copy, Fog, HDRI, registration, dependencies, idempotence, GUID mismatch");
+                Debug.Log("Material fix self-tests PASS: Combined Mesh, Lit Translucent None, material ownership, profile hash/reload, scope, inactive LOD, billboard, texture/UV/cutout, profile API, volume copy, Fog, HDRI, registration, dependencies, idempotence, GUID mismatch");
             }
             finally { EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single); }
         }

@@ -48,7 +48,14 @@ class SettingsStore:
         data = json.loads(self.path.read_text(encoding='utf-8-sig'))
         if not isinstance(data, dict) or data.get('schema_version', 1) != 1:
             raise ValueError('Неизвестный формат настроек')
-        return merge(defaults(), data)
+        result = merge(defaults(), data)
+        for group in ('map_fixes', 'playstation_map_fixes', 'xbox_map_fixes'):
+            profile = result['config'][group]
+            if (profile.get('foliage_profile_path') == 'Assets/MapResources/Graph/Foliage.asset'
+                    and profile.get('foliage_profile_guid') == '4ce80190f8d308243a16d19290d0b45b'):
+                profile['foliage_profile_path'] = 'Assets/MapResources/TestMap/Graph/Foliage.asset'
+                profile['foliage_profile_guid'] = '66567e56d8808594999fbe41b68d83d1'
+        return result
 
     def save(self, data):
         write_json(self.path, data)

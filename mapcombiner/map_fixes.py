@@ -9,8 +9,8 @@ class MapFixConfig:
     auto_fix_foliage_shader: bool = True
     auto_fix_foliage_diffusion_profile: bool = True
     auto_fix_foliage_profile_registration: bool = True
-    foliage_profile_path: str = "Assets/MapResources/Graph/Foliage.asset"
-    foliage_profile_guid: str = "4ce80190f8d308243a16d19290d0b45b"
+    foliage_profile_path: str = "Assets/MapResources/TestMap/Graph/Foliage.asset"
+    foliage_profile_guid: str = "66567e56d8808594999fbe41b68d83d1"
 
     @classmethod
     def load(cls, values=None):

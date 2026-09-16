@@ -1,0 +1,609 @@
+{
+  "job_id": "20260916-151427-8dc57ac7",
+  "started": "2026-09-16T12:14:27.626491+00:00",
+  "source": "C:\\Users\\user\\Documents\\DRO File\\Maps\\TomatoSportsland.unitypackage",
+  "repository": "C:\\Repositories\\MapUploader\\dro-map-uploader",
+  "status": "PASS",
+  "stage": "complete",
+  "operation": "preflight",
+  "runtime_llm_calls": 0,
+  "runtime_api_tokens": 0,
+  "cleanup_verified": true,
+  "platform": "steam",
+  "source_sha256": "284af675b808e234a2148deb7db51d1266d633577384e601a188abe94b4ff37c",
+  "overrides": {
+    "previewPath": {
+      "source": "C:\\Users\\user\\Downloads\\Maps\\Tomato\\02521733-d8e2-4df2-92ae-49d88a748493_optimized_1000.png",
+      "sha256": "f779205e1ed601f3b9caed9b6bac3e25c773a9151aff6cbd0257cf111e7c4e23"
+    },
+    "iconPath": {
+      "source": "C:\\Users\\user\\Downloads\\Maps\\Tomato\\02521733-d8e2-4df2-92ae-49d88a748493_optimized_1000.png",
+      "sha256": "f779205e1ed601f3b9caed9b6bac3e25c773a9151aff6cbd0257cf111e7c4e23"
+    }
+  },
+  "baseline": {
+    "entries_sha256": "35bf33bc330f9f342e61a7ddbd23c35000cef30b3eff6a1dffae95147696cb0f",
+    "staged_diff_sha256": "1af892f62a6ce6a7e9a570508bb6e29d8473e13c96e56f93e9aee093088c0589"
+  },
+  "skipped_baseline_assets": [
+    {
+      "asset": "Assets/Art/Internal/EnvironmentProfiles/sunlight.prefab",
+      "guid": "05609c9de416e4b49b09137d29bf5ff5",
+      "baseline_paths": [
+        "Assets/Art/Internal/EnvironmentProfiles/sunlight.prefab"
+      ],
+      "reason": "GUID already exists in baseline; keep baseline asset"
+    },
+    {
+      "asset": "Assets/Art/Internal/EnvironmentProfiles/ebisu/ebisu_s.hdr",
+      "guid": "3028697a74e77f04084f01338b60d98b",
+      "baseline_paths": [
+        "Assets/Art/Internal/EnvironmentProfiles/ebisu/ebisu_s.hdr"
+      ],
+      "reason": "GUID already exists in baseline; keep baseline asset"
+    },
+    {
+      "asset": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+      "guid": "66567e56d8808594999fbe41b68d83d1",
+      "baseline_paths": [
+        "Assets/MapResources/TestMap/Graph/Foliage.asset"
+      ],
+      "reason": "GUID already exists in baseline; keep baseline asset"
+    },
+    {
+      "asset": "Assets/MapResources/Graph/FoliageSimple.shadergraph",
+      "guid": "7e9502451064a9b4bbddab1d7563994c",
+      "baseline_paths": [
+        "Assets/MapResources/Graph/FoliageSimple.shadergraph"
+      ],
+      "reason": "GUID already exists in baseline; keep baseline asset"
+    },
+    {
+      "asset": "Assets/Other/HDRPDefaultResources/Foliage Diffusion Profile.asset",
+      "guid": "d1581f3ed60fa74488b02b2f300b6998",
+      "baseline_paths": [
+        "Assets/Other/HDRPDefaultResources/Foliage Diffusion Profile.asset"
+      ],
+      "reason": "GUID already exists in baseline; keep baseline asset"
+    },
+    {
+      "asset": "Assets/Art/Internal/EnvironmentProfiles/japan/TestMap.asset",
+      "guid": "f4ee3114fb81893449a1bbf659ed4741",
+      "baseline_paths": [
+        "Assets/Art/Internal/EnvironmentProfiles/japan/TestMap.asset"
+      ],
+      "reason": "GUID already exists in baseline; keep baseline asset"
+    }
+  ],
+  "unity_result": {
+    "status": "PASS",
+    "message": "Map preparation and material preflight completed",
+    "stage": "prepared-for-validation",
+    "sceneName": "tamada",
+    "scenePath": "Assets/MapResources/tamada/tamada.unity",
+    "metaPath": "Assets/__CarXMapCombinerJob/MapMetaConfig.asset",
+    "externalPath": "",
+    "platform": "StandaloneWindows",
+    "buildTarget": "StandaloneWindows",
+    "compression": "NoCompress",
+    "targets": "Map|Meta",
+    "mapBuildSucceeded": false,
+    "metaBuildSucceeded": false,
+    "externalVerified": false,
+    "bundleContentsVerified": false,
+    "mapFixes": {
+      "status": "PASS",
+      "foliageProfile": "Assets/MapResources/Graph/Foliage.asset",
+      "materialsSeen": 236,
+      "treeMaterials": 4,
+      "foliageMaterials": 4,
+      "materialsEditedInPlace": 4,
+      "materialCopies": 0,
+      "volumeCopies": 1,
+      "warnings": [],
+      "changes": [
+        {
+          "asset": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+          "property": "materialEdit",
+          "oldValue": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+          "newValue": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+          "reason": "Edit a new imported map material in place; all scene uses have the same role"
+        },
+        {
+          "asset": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+          "property": "shader",
+          "oldValue": "Shader Graphs/FoliageSimple",
+          "newValue": "HDRP/Lit",
+          "reason": "Tree materials must use HDRP/Lit"
+        },
+        {
+          "asset": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+          "property": "_BaseColorMap",
+          "oldValue": "Assets/MapResources/tamada/texture/trans023.png",
+          "newValue": "Assets/MapResources/tamada/texture/trans023.png",
+          "reason": "Preserve source _BaseColorMap from Assets/MapResources/tamada/material/Wood_Board_Cork.mat"
+        },
+        {
+          "asset": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+          "property": "Diffusion Profile",
+          "oldValue": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+          "newValue": "Assets/MapResources/Graph/Foliage.asset",
+          "reason": "Use the configured Foliage profile through HDMaterial"
+        },
+        {
+          "asset": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+          "property": "materialEdit",
+          "oldValue": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+          "newValue": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+          "reason": "Edit a new imported map material in place; all scene uses have the same role"
+        },
+        {
+          "asset": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+          "property": "shader",
+          "oldValue": "Shader Graphs/FoliageSimple",
+          "newValue": "HDRP/Lit",
+          "reason": "Tree materials must use HDRP/Lit"
+        },
+        {
+          "asset": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+          "property": "_BaseColorMap",
+          "oldValue": "Assets/MapResources/tamada/texture/OTPT_03.png",
+          "newValue": "Assets/MapResources/tamada/texture/OTPT_03.png",
+          "reason": "Preserve source _BaseColorMap from Assets/MapResources/tamada/texture/Materials/OTPT_03.mat"
+        },
+        {
+          "asset": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+          "property": "Diffusion Profile",
+          "oldValue": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+          "newValue": "Assets/MapResources/Graph/Foliage.asset",
+          "reason": "Use the configured Foliage profile through HDMaterial"
+        },
+        {
+          "asset": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+          "property": "materialEdit",
+          "oldValue": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+          "newValue": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+          "reason": "Edit a new imported map material in place; all scene uses have the same role"
+        },
+        {
+          "asset": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+          "property": "shader",
+          "oldValue": "Shader Graphs/FoliageSimple",
+          "newValue": "HDRP/Lit",
+          "reason": "Tree materials must use HDRP/Lit"
+        },
+        {
+          "asset": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+          "property": "_BaseColorMap",
+          "oldValue": "Assets/MapResources/tamada/texture/Tree lime 3.png",
+          "newValue": "Assets/MapResources/tamada/texture/Tree lime 3.png",
+          "reason": "Preserve source _BaseColorMap from Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat"
+        },
+        {
+          "asset": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+          "property": "Diffusion Profile",
+          "oldValue": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+          "newValue": "Assets/MapResources/Graph/Foliage.asset",
+          "reason": "Use the configured Foliage profile through HDMaterial"
+        },
+        {
+          "asset": "Assets/MapResources/tamada/material/WinterTrees.mat",
+          "property": "materialEdit",
+          "oldValue": "Assets/MapResources/tamada/material/WinterTrees.mat",
+          "newValue": "Assets/MapResources/tamada/material/WinterTrees.mat",
+          "reason": "Edit a new imported map material in place; all scene uses have the same role"
+        },
+        {
+          "asset": "Assets/MapResources/tamada/material/WinterTrees.mat",
+          "property": "shader",
+          "oldValue": "Shader Graphs/FoliageSimple",
+          "newValue": "HDRP/Lit",
+          "reason": "Tree materials must use HDRP/Lit"
+        },
+        {
+          "asset": "Assets/MapResources/tamada/material/WinterTrees.mat",
+          "property": "_BaseColorMap",
+          "oldValue": "Assets/MapResources/tamada/texture/WinterTrees.dds",
+          "newValue": "Assets/MapResources/tamada/texture/WinterTrees.dds",
+          "reason": "Preserve source _BaseColorMap from Assets/MapResources/tamada/material/WinterTrees.mat"
+        },
+        {
+          "asset": "Assets/MapResources/tamada/material/WinterTrees.mat",
+          "property": "Diffusion Profile",
+          "oldValue": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+          "newValue": "Assets/MapResources/Graph/Foliage.asset",
+          "reason": "Use the configured Foliage profile through HDMaterial"
+        },
+        {
+          "asset": "Assets/__CarXMapCombinerJob/MapFixes/TestMap_profile.asset",
+          "property": "HDRISky.distortionMode",
+          "oldValue": "Procedural/override=True",
+          "newValue": "None/override=True",
+          "reason": "HDRI safe setting"
+        },
+        {
+          "asset": "Assets/__CarXMapCombinerJob/MapFixes/TestMap_profile.asset",
+          "property": "DiffusionProfileList",
+          "oldValue": "",
+          "newValue": "Assets/MapResources/Graph/Foliage.asset",
+          "reason": "Register Foliage in a scene Volume Profile so the reference is bundled"
+        },
+        {
+          "asset": "Assets/Art/Internal/EnvironmentProfiles/japan/TestMap.asset",
+          "property": "mapVolumeProfileCopy",
+          "oldValue": "Assets/Art/Internal/EnvironmentProfiles/japan/TestMap.asset",
+          "newValue": "Assets/__CarXMapCombinerJob/MapFixes/TestMap_profile.asset",
+          "reason": "Keep the source/shared Volume Profile unchanged"
+        },
+        {
+          "asset": "japan ",
+          "property": "sharedProfile",
+          "oldValue": "Assets/Art/Internal/EnvironmentProfiles/japan/TestMap.asset",
+          "newValue": "Assets/__CarXMapCombinerJob/MapFixes/TestMap_profile.asset",
+          "reason": "Bind the fixed Volume Profile to this map"
+        }
+      ]
+    },
+    "reflectionProbesPrepared": 0,
+    "candidates": [],
+    "errors": [],
+    "diagnostics": [],
+    "changes": [
+      {
+        "asset": "Assets/__CarXMapCombinerJob/MapMetaConfig.asset",
+        "property": "asset",
+        "oldValue": "null",
+        "newValue": "MapMetaConfig",
+        "reason": "No config supplied or imported"
+      },
+      {
+        "asset": "Assets/__CarXMapCombinerJob/MapMetaConfig.asset",
+        "property": "id",
+        "oldValue": "null",
+        "newValue": "f2bd224ce93085c438548064f00f567e",
+        "reason": "Synchronize with AssetDatabase GUID"
+      },
+      {
+        "asset": "Assets/__CarXMapCombinerJob/MapMetaConfig.asset",
+        "property": "mapMetaConfigValue.mapName",
+        "oldValue": "null",
+        "newValue": "tamada",
+        "reason": "Use sanitized scene name"
+      },
+      {
+        "asset": "Assets/__CarXMapCombinerJob/previewPath.png",
+        "property": "TextureImporter.isReadable/mipmapEnabled",
+        "oldValue": "False/True",
+        "newValue": "True/False",
+        "reason": "Preview requirements"
+      },
+      {
+        "asset": "Assets/__CarXMapCombinerJob/iconPath.png",
+        "property": "TextureImporter.isReadable/mipmapEnabled",
+        "oldValue": "False/True",
+        "newValue": "True/False",
+        "reason": "Preview Mini requirements"
+      },
+      {
+        "asset": "Assets/__CarXMapCombinerJob/MapMetaConfig.asset",
+        "property": "mapMetaConfigValue.largeIcon",
+        "oldValue": "",
+        "newValue": "Assets/__CarXMapCombinerJob/previewPath.png",
+        "reason": "Preview selection"
+      },
+      {
+        "asset": "Assets/__CarXMapCombinerJob/MapMetaConfig.asset",
+        "property": "mapMetaConfigValue.icon",
+        "oldValue": "",
+        "newValue": "Assets/__CarXMapCombinerJob/iconPath.png",
+        "reason": "Preview Mini selection"
+      },
+      {
+        "asset": "Assets/Resources/MapManagerConfig.asset",
+        "property": "targetScene",
+        "oldValue": "",
+        "newValue": "Assets/MapResources/tamada/tamada.unity",
+        "reason": "Prepare explicit build target"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+        "property": "materialEdit",
+        "oldValue": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+        "newValue": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+        "reason": "Edit a new imported map material in place; all scene uses have the same role"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+        "property": "shader",
+        "oldValue": "Shader Graphs/FoliageSimple",
+        "newValue": "HDRP/Lit",
+        "reason": "Tree materials must use HDRP/Lit"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+        "property": "_BaseColorMap",
+        "oldValue": "Assets/MapResources/tamada/texture/trans023.png",
+        "newValue": "Assets/MapResources/tamada/texture/trans023.png",
+        "reason": "Preserve source _BaseColorMap from Assets/MapResources/tamada/material/Wood_Board_Cork.mat"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+        "property": "Diffusion Profile",
+        "oldValue": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+        "newValue": "Assets/MapResources/Graph/Foliage.asset",
+        "reason": "Use the configured Foliage profile through HDMaterial"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+        "property": "materialEdit",
+        "oldValue": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+        "newValue": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+        "reason": "Edit a new imported map material in place; all scene uses have the same role"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+        "property": "shader",
+        "oldValue": "Shader Graphs/FoliageSimple",
+        "newValue": "HDRP/Lit",
+        "reason": "Tree materials must use HDRP/Lit"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+        "property": "_BaseColorMap",
+        "oldValue": "Assets/MapResources/tamada/texture/OTPT_03.png",
+        "newValue": "Assets/MapResources/tamada/texture/OTPT_03.png",
+        "reason": "Preserve source _BaseColorMap from Assets/MapResources/tamada/texture/Materials/OTPT_03.mat"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+        "property": "Diffusion Profile",
+        "oldValue": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+        "newValue": "Assets/MapResources/Graph/Foliage.asset",
+        "reason": "Use the configured Foliage profile through HDMaterial"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+        "property": "materialEdit",
+        "oldValue": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+        "newValue": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+        "reason": "Edit a new imported map material in place; all scene uses have the same role"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+        "property": "shader",
+        "oldValue": "Shader Graphs/FoliageSimple",
+        "newValue": "HDRP/Lit",
+        "reason": "Tree materials must use HDRP/Lit"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+        "property": "_BaseColorMap",
+        "oldValue": "Assets/MapResources/tamada/texture/Tree lime 3.png",
+        "newValue": "Assets/MapResources/tamada/texture/Tree lime 3.png",
+        "reason": "Preserve source _BaseColorMap from Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+        "property": "Diffusion Profile",
+        "oldValue": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+        "newValue": "Assets/MapResources/Graph/Foliage.asset",
+        "reason": "Use the configured Foliage profile through HDMaterial"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/material/WinterTrees.mat",
+        "property": "materialEdit",
+        "oldValue": "Assets/MapResources/tamada/material/WinterTrees.mat",
+        "newValue": "Assets/MapResources/tamada/material/WinterTrees.mat",
+        "reason": "Edit a new imported map material in place; all scene uses have the same role"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/material/WinterTrees.mat",
+        "property": "shader",
+        "oldValue": "Shader Graphs/FoliageSimple",
+        "newValue": "HDRP/Lit",
+        "reason": "Tree materials must use HDRP/Lit"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/material/WinterTrees.mat",
+        "property": "_BaseColorMap",
+        "oldValue": "Assets/MapResources/tamada/texture/WinterTrees.dds",
+        "newValue": "Assets/MapResources/tamada/texture/WinterTrees.dds",
+        "reason": "Preserve source _BaseColorMap from Assets/MapResources/tamada/material/WinterTrees.mat"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/material/WinterTrees.mat",
+        "property": "Diffusion Profile",
+        "oldValue": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+        "newValue": "Assets/MapResources/Graph/Foliage.asset",
+        "reason": "Use the configured Foliage profile through HDMaterial"
+      },
+      {
+        "asset": "Assets/__CarXMapCombinerJob/MapFixes/TestMap_profile.asset",
+        "property": "HDRISky.distortionMode",
+        "oldValue": "Procedural/override=True",
+        "newValue": "None/override=True",
+        "reason": "HDRI safe setting"
+      },
+      {
+        "asset": "Assets/__CarXMapCombinerJob/MapFixes/TestMap_profile.asset",
+        "property": "DiffusionProfileList",
+        "oldValue": "",
+        "newValue": "Assets/MapResources/Graph/Foliage.asset",
+        "reason": "Register Foliage in a scene Volume Profile so the reference is bundled"
+      },
+      {
+        "asset": "Assets/Art/Internal/EnvironmentProfiles/japan/TestMap.asset",
+        "property": "mapVolumeProfileCopy",
+        "oldValue": "Assets/Art/Internal/EnvironmentProfiles/japan/TestMap.asset",
+        "newValue": "Assets/__CarXMapCombinerJob/MapFixes/TestMap_profile.asset",
+        "reason": "Keep the source/shared Volume Profile unchanged"
+      },
+      {
+        "asset": "japan ",
+        "property": "sharedProfile",
+        "oldValue": "Assets/Art/Internal/EnvironmentProfiles/japan/TestMap.asset",
+        "newValue": "Assets/__CarXMapCombinerJob/MapFixes/TestMap_profile.asset",
+        "reason": "Bind the fixed Volume Profile to this map"
+      }
+    ]
+  },
+  "map_fixes": {
+    "status": "PASS",
+    "foliageProfile": "Assets/MapResources/Graph/Foliage.asset",
+    "materialsSeen": 236,
+    "treeMaterials": 4,
+    "foliageMaterials": 4,
+    "materialsEditedInPlace": 4,
+    "materialCopies": 0,
+    "volumeCopies": 1,
+    "warnings": [],
+    "changes": [
+      {
+        "asset": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+        "property": "materialEdit",
+        "oldValue": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+        "newValue": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+        "reason": "Edit a new imported map material in place; all scene uses have the same role"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+        "property": "shader",
+        "oldValue": "Shader Graphs/FoliageSimple",
+        "newValue": "HDRP/Lit",
+        "reason": "Tree materials must use HDRP/Lit"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+        "property": "_BaseColorMap",
+        "oldValue": "Assets/MapResources/tamada/texture/trans023.png",
+        "newValue": "Assets/MapResources/tamada/texture/trans023.png",
+        "reason": "Preserve source _BaseColorMap from Assets/MapResources/tamada/material/Wood_Board_Cork.mat"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/material/Wood_Board_Cork.mat",
+        "property": "Diffusion Profile",
+        "oldValue": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+        "newValue": "Assets/MapResources/Graph/Foliage.asset",
+        "reason": "Use the configured Foliage profile through HDMaterial"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+        "property": "materialEdit",
+        "oldValue": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+        "newValue": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+        "reason": "Edit a new imported map material in place; all scene uses have the same role"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+        "property": "shader",
+        "oldValue": "Shader Graphs/FoliageSimple",
+        "newValue": "HDRP/Lit",
+        "reason": "Tree materials must use HDRP/Lit"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+        "property": "_BaseColorMap",
+        "oldValue": "Assets/MapResources/tamada/texture/OTPT_03.png",
+        "newValue": "Assets/MapResources/tamada/texture/OTPT_03.png",
+        "reason": "Preserve source _BaseColorMap from Assets/MapResources/tamada/texture/Materials/OTPT_03.mat"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/texture/Materials/OTPT_03.mat",
+        "property": "Diffusion Profile",
+        "oldValue": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+        "newValue": "Assets/MapResources/Graph/Foliage.asset",
+        "reason": "Use the configured Foliage profile through HDMaterial"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+        "property": "materialEdit",
+        "oldValue": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+        "newValue": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+        "reason": "Edit a new imported map material in place; all scene uses have the same role"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+        "property": "shader",
+        "oldValue": "Shader Graphs/FoliageSimple",
+        "newValue": "HDRP/Lit",
+        "reason": "Tree materials must use HDRP/Lit"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+        "property": "_BaseColorMap",
+        "oldValue": "Assets/MapResources/tamada/texture/Tree lime 3.png",
+        "newValue": "Assets/MapResources/tamada/texture/Tree lime 3.png",
+        "reason": "Preserve source _BaseColorMap from Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat",
+        "property": "Diffusion Profile",
+        "oldValue": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+        "newValue": "Assets/MapResources/Graph/Foliage.asset",
+        "reason": "Use the configured Foliage profile through HDMaterial"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/material/WinterTrees.mat",
+        "property": "materialEdit",
+        "oldValue": "Assets/MapResources/tamada/material/WinterTrees.mat",
+        "newValue": "Assets/MapResources/tamada/material/WinterTrees.mat",
+        "reason": "Edit a new imported map material in place; all scene uses have the same role"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/material/WinterTrees.mat",
+        "property": "shader",
+        "oldValue": "Shader Graphs/FoliageSimple",
+        "newValue": "HDRP/Lit",
+        "reason": "Tree materials must use HDRP/Lit"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/material/WinterTrees.mat",
+        "property": "_BaseColorMap",
+        "oldValue": "Assets/MapResources/tamada/texture/WinterTrees.dds",
+        "newValue": "Assets/MapResources/tamada/texture/WinterTrees.dds",
+        "reason": "Preserve source _BaseColorMap from Assets/MapResources/tamada/material/WinterTrees.mat"
+      },
+      {
+        "asset": "Assets/MapResources/tamada/material/WinterTrees.mat",
+        "property": "Diffusion Profile",
+        "oldValue": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+        "newValue": "Assets/MapResources/Graph/Foliage.asset",
+        "reason": "Use the configured Foliage profile through HDMaterial"
+      },
+      {
+        "asset": "Assets/__CarXMapCombinerJob/MapFixes/TestMap_profile.asset",
+        "property": "HDRISky.distortionMode",
+        "oldValue": "Procedural/override=True",
+        "newValue": "None/override=True",
+        "reason": "HDRI safe setting"
+      },
+      {
+        "asset": "Assets/__CarXMapCombinerJob/MapFixes/TestMap_profile.asset",
+        "property": "DiffusionProfileList",
+        "oldValue": "",
+        "newValue": "Assets/MapResources/Graph/Foliage.asset",
+        "reason": "Register Foliage in a scene Volume Profile so the reference is bundled"
+      },
+      {
+        "asset": "Assets/Art/Internal/EnvironmentProfiles/japan/TestMap.asset",
+        "property": "mapVolumeProfileCopy",
+        "oldValue": "Assets/Art/Internal/EnvironmentProfiles/japan/TestMap.asset",
+        "newValue": "Assets/__CarXMapCombinerJob/MapFixes/TestMap_profile.asset",
+        "reason": "Keep the source/shared Volume Profile unchanged"
+      },
+      {
+        "asset": "japan ",
+        "property": "sharedProfile",
+        "oldValue": "Assets/Art/Internal/EnvironmentProfiles/japan/TestMap.asset",
+        "newValue": "Assets/__CarXMapCombinerJob/MapFixes/TestMap_profile.asset",
+        "reason": "Bind the fixed Volume Profile to this map"
+      }
+    ]
+  },
+  "final_baseline": {
+    "entries_sha256": "35bf33bc330f9f342e61a7ddbd23c35000cef30b3eff6a1dffae95147696cb0f",
+    "staged_diff_sha256": "1af892f62a6ce6a7e9a570508bb6e29d8473e13c96e56f93e9aee093088c0589"
+  },
+  "finished": "2026-09-16T12:17:29.089557+00:00",
+  "log_directory": "C:\\Users\\user\\Documents\\AutoBuildMap\\2026-09-16\\Log\\tamada\\20260916-151427-8dc57ac7"
+}

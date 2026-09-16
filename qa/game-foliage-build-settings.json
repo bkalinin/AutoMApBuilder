@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "config": {
+    "steam_repo": "C:\\Repositories\\MapUploader\\dro-map-uploader",
+    "unity_exe": "C:\\Program Files\\Unity\\Hub\\Editor\\2023.2.20f1\\Editor\\Unity.exe",
+    "output_root": "C:\\Users\\user\\Documents\\AutoBuildMap",
+    "state_root": "C:\\Users\\user\\AppData\\Local\\CarXMapCombiner",
+    "unity_timeout_seconds": 7200,
+    "validation": {
+      "scan_area_mode": "auto",
+      "map_center": [
+        0.0,
+        0.0
+      ],
+      "map_size": [
+        1000.0,
+        1000.0
+      ],
+      "grid_size": 50.0,
+      "raycast_height": 500.0,
+      "camera_pitch": 0.0,
+      "validation_fov": 60.0,
+      "resolution": [
+        1920,
+        1080
+      ],
+      "max_tris": 2000000,
+      "max_draw_calls": 4000,
+      "max_textures": 140,
+      "screenshots": false,
+      "ignore_distant_outliers": true
+    },
+    "map_fixes": {
+      "disable_fog": false,
+      "hdri_distortion_none": true,
+      "validate_foliage_materials": true,
+      "auto_fix_foliage_shader": true,
+      "auto_fix_foliage_diffusion_profile": true,
+      "auto_fix_foliage_profile_registration": true,
+      "foliage_profile_path": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+      "foliage_profile_guid": "66567e56d8808594999fbe41b68d83d1"
+    },
+    "playstation_repo": "C:\\Repositories\\MapUploaderPS\\dro-map-uploaderPlayStation",
+    "playstation_unity_exe": "C:\\Program Files\\Unity\\Hub\\Editor\\2023.2.20f1\\Editor\\Unity.exe",
+    "playstation_map_fixes": {
+      "disable_fog": false,
+      "hdri_distortion_none": true,
+      "validate_foliage_materials": true,
+      "auto_fix_foliage_shader": true,
+      "auto_fix_foliage_diffusion_profile": true,
+      "auto_fix_foliage_profile_registration": true,
+      "foliage_profile_path": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+      "foliage_profile_guid": "66567e56d8808594999fbe41b68d83d1"
+    },
+    "playstation_reflection_probe_fix": true,
+    "xbox_repo": "C:\\Repositories\\dro-map-uploaderXbox",
+    "xbox_unity_exe": "C:\\Program Files\\Unity\\Hub\\Editor\\6000.0.65f1\\Editor\\Unity.exe",
+    "xbox_map_fixes": {
+      "disable_fog": false,
+      "hdri_distortion_none": true,
+      "validate_foliage_materials": true,
+      "auto_fix_foliage_shader": true,
+      "auto_fix_foliage_diffusion_profile": true,
+      "auto_fix_foliage_profile_registration": true,
+      "foliage_profile_path": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+      "foliage_profile_guid": "66567e56d8808594999fbe41b68d83d1"
+    }
+  },
+  "ui": {
+    "package": "C:/Users/user/Documents/DRO File/Maps/TomatoSportsland.unitypackage",
+    "scene": "",
+    "meta_asset": "",
+    "overrides_enabled": true,
+    "meta": "",
+    "preview": "C:/Users/user/Downloads/Maps/Tomato/02521733-d8e2-4df2-92ae-49d88a748493_optimized_1000.png",
+    "icon": "C:/Users/user/Downloads/Maps/Tomato/02521733-d8e2-4df2-92ae-49d88a748493_optimized_1000.png",
+    "last_directory": "",
+    "platforms": [
+      "steam"
+    ],
+    "notifications": true,
+    "ignore_warnings": true,
+    "last_run": "C:\\Users\\user\\AppData\\Local\\CarXMapCombiner\\runs\\20260916-152229-ae49dac2"
+  }
+}

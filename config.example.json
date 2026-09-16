@@ -34,20 +34,20 @@
     "auto_fix_foliage_shader": true,
     "auto_fix_foliage_diffusion_profile": true,
     "auto_fix_foliage_profile_registration": true,
-    "foliage_profile_path": "Assets/MapResources/Graph/Foliage.asset",
-    "foliage_profile_guid": "4ce80190f8d308243a16d19290d0b45b"
+    "foliage_profile_path": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+    "foliage_profile_guid": "66567e56d8808594999fbe41b68d83d1"
   },
   "playstation_repo": "C:\\Repositories\\MapUploaderPS\\dro-map-uploaderPlayStation",
   "playstation_unity_exe": "C:\\Program Files\\Unity\\Hub\\Editor\\2023.2.20f1\\Editor\\Unity.exe",
   "playstation_map_fixes": {
-    "foliage_profile_path": "Assets/MapResources/Graph/Foliage.asset",
-    "foliage_profile_guid": "4ce80190f8d308243a16d19290d0b45b"
+    "foliage_profile_path": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+    "foliage_profile_guid": "66567e56d8808594999fbe41b68d83d1"
   },
   "playstation_reflection_probe_fix": true,
   "xbox_repo": "C:\\Repositories\\dro-map-uploaderXbox",
   "xbox_unity_exe": "C:\\Program Files\\Unity\\Hub\\Editor\\6000.0.65f1\\Editor\\Unity.exe",
   "xbox_map_fixes": {
-    "foliage_profile_path": "Assets/MapResources/Graph/Foliage.asset",
-    "foliage_profile_guid": "4ce80190f8d308243a16d19290d0b45b"
+    "foliage_profile_path": "Assets/MapResources/TestMap/Graph/Foliage.asset",
+    "foliage_profile_guid": "66567e56d8808594999fbe41b68d83d1"
   }
 }

@@ -11,7 +11,7 @@
 
 1. Для CameraTest на Desktop 2 запустите приложение вручную на Desktop 2.
 2. Выберите `.unitypackage`, платформы и при необходимости измените настройки.
-3. Нажмите «Проверить» или «Проверить и собрать».
+3. Нажмите «Проверить», «Собрать» или «Проверить и собрать». «Собрать» не запускает CameraTest, в том числе после отдельной проверки.
 4. Результат доступен через «Открыть отчёт» и «Открыть папку результатов».
 
 Закройте в Unity только uploader-проекты выбранных платформ перед запуском.
@@ -30,9 +30,23 @@
 Отчёты общего задания: `AutoBuildMap/<дата>/Log/Runs/<run-id>/report.html`.
 Входные package, metadata и изображения не изменяются.
 
-Проверено 33 автоматическими тестами и просмотром изображений интерфейса.
-Полный прогон через новое окно ещё не выполнен: 16 сентября пользователь выбрал самостоятельный тест.
-Ранее отдельные реальные сборки всех трёх платформ прошли; подробности — в `PROGRESS.md`.
+Пользователь выполнил реальную проверку и сборку TomatoSportsland на трёх платформах.
+Исправления по результатам этого прогона проверены 38 автоматическими тестами, Unity preflight
+в 2023.2.20f1 и 6000.0.65f1, а также реальной Steam-сборкой через отдельную кнопку «Собрать».
+Подробности и границы проверки — в `PROGRESS.md`.
+
+Новая карта очищает предыдущие результаты в окне. «Собрать» доступна и без CameraTest;
+сохранённый замер той же карты показывается как предыдущий, с источником в отчёте.
+Если пакет изменился, старый замер не переносится.
+При включённой замене дополнительных файлов оба изображения Preview / Preview Mini обязательны:
+пустой путь или отсутствующий файл останавливают задание до запуска Unity. MapMetaConfig необязателен.
+
+Foliage fix проверяет каждый слот Renderer, включая Combined Mesh и неактивные LOD.
+HDRP/Lit + Translucent + отсутствующий профиль распознаётся независимо от имени.
+Назначается явно настроенный Foliage; проверяются GUID-ссылка и shader hash профиля.
+Новые импортированные `.mat` с совместимыми использованиями исправляются на месте с сохранением GUID.
+Baseline/SDK, встроенные материалы и материалы с разными ролями получают отдельные копии.
+
 
 ## Run
 
@@ -185,10 +199,10 @@ not automatically reconstructed. A changed material is copied and rebound only
 to the relevant map renderers; shared source materials remain unchanged.
 
 Leaves use HDMaterial.GetDiffusionProfile, SetDiffusionProfile and ValidateMaterial.
-The Steam profile explicitly selected by the user is:
+The profile matching the user-tested game asset is used for Steam, PlayStation and Xbox:
 
-- Path: Assets/MapResources/Graph/Foliage.asset
-- GUID: 4ce80190f8d308243a16d19290d0b45b
+- Path: Assets/MapResources/TestMap/Graph/Foliage.asset
+- GUID: 66567e56d8808594999fbe41b68d83d1
 
 Path/GUID disagreement requests user input instead of choosing a same-named asset.
 The profile is registered in the map's scene Volume Diffusion Profile List, making
@@ -244,3 +258,31 @@ Console SDK/add-on contents stay local. Existing staged packages/plugins and
 ignored files are preserved; the bridge does not rewrite package manifests or
 choose replacement SDK versions. Platform logs are Steam.log, PlayStation.log,
 Xbox.log under the existing dated Log/SceneName/JOB_ID layout.
+
+## Диагностика материалов в готовой сборке
+
+Каждая сборка записывает `material-trace.json` и краткий `material-trace.txt` рядом
+с обычными логами. В HTML-отчёте этапа есть ссылка «Материалы».
+
+Цепочка: Renderer и слот до исправлений → Renderer после исправлений → сохранённый
+`.mat` с GUID/local file ID и SHA-256 → сцена, подготовленная штатным MapBuilder →
+Renderer и ссылка на Material внутри фактического External bundle. Проверяются
+Shader, Material Type, закодированный GUID Diffusion Profile и его shader hash.
+Все слоты Renderer учитываются независимо от распознавания foliage, включая
+Combined Mesh; это помогает обнаружить материал, пропущенный классификатором.
+
+`MATCH` означает совпадение прослеженных привязок и перечисленных полей.
+`MISMATCH` сообщает расхождение. `INCOMPLETE` означает недостаток доказательств:
+например, неоднозначные одинаковые пути объектов, встроенный материал без `.mat`
+или недоступные данные bundle. Такие случаи не выдаются за успешную проверку.
+Отчёт не доказывает визуальную корректность в игре, наличие всех shader variants
+или равенство всех свойств/текстур материала.
+
+Это диагностический отчёт: он не добавляет BLOCKER, повторный CameraTest,
+принудительный reimport или новые правила исправления материалов. Возможная
+обязательная проверка сохранения изменённых материалов обсуждается отдельно.
+
+Bundle читается локально через UnityPy 1.25.3, без загрузки игровой сцены и без
+выполнения её кода. Зависимость устанавливается `Setup-MapCombiner.cmd`; во время
+обычной работы нет загрузок из сети, LLM calls или API tokens. Исходные `.mat`
+читаются до восстановления baseline. Bundle не изменяется.

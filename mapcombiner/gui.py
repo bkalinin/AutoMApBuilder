@@ -135,6 +135,7 @@ class MainWindow(QMainWindow):
         self.process = None
         self.run_directory = None
         self.run = {}
+        self.validation_source = None
         self.notified = None
         self.candidate_key = None
         self.cancelling = False
@@ -230,6 +231,8 @@ class MainWindow(QMainWindow):
         self.reset_button.clicked.connect(self.reset)
         self.validate_button = QPushButton('Проверить')
         self.validate_button.clicked.connect(lambda: self.start(True))
+        self.build_only_button = QPushButton('Собрать')
+        self.build_only_button.clicked.connect(lambda: self.start(build_only=True))
         self.build_button = QPushButton('Проверить и собрать')
         self.build_button.setObjectName('primary')
         self.build_button.clicked.connect(lambda: self.start(False))
@@ -240,6 +243,7 @@ class MainWindow(QMainWindow):
         actions.addStretch()
         actions.addWidget(self.cancel_button)
         actions.addWidget(self.validate_button)
+        actions.addWidget(self.build_only_button)
         actions.addWidget(self.build_button)
         outer.addLayout(actions)
         self.setCentralWidget(body)
@@ -254,11 +258,11 @@ class MainWindow(QMainWindow):
             self.tray.messageClicked.connect(self.show_from_tray)
             self.tray.show()
         self.apply_settings()
-        self.package.edit.textEdited.connect(self.clear_candidates)
         # File picker/drop uses textChanged, so clear old explicit selections for any package change.
         self.package.edit.textChanged.connect(self.clear_candidates)
         last = self.settings['ui'].get('last_run')
-        if last and Path(last, 'request.json').is_file():
+        if (last and Path(last, 'request.json').is_file()
+                and Path(read_json(Path(last) / 'request.json').get('inputs', {}).get('package', '')) == Path(self.package.text())):
             self.run_directory = Path(last)
             old = read_json(self.run_directory / 'run-manifest.json')
             self.notified = (last, old.get('status'))
@@ -404,6 +408,23 @@ class MainWindow(QMainWindow):
                 control.setEnabled(enabled)
 
     def clear_candidates(self):
+        self.validation_source = None
+        self.run_directory = None
+        self.run = {}
+        self.settings['ui']['last_run'] = ''
+        self.notified = None
+        self.candidate_key = None
+        for metric in self.metrics.values():
+            metric.setText('—')
+        for key, label in self.stage_labels.items():
+            label.setText(('CameraTest' if key == 'validation' else PLATFORMS[key].label) + '   —')
+        self.report_button.setEnabled(False)
+        self.continue_button.hide()
+        self.recover_button.hide()
+        self.status.setText('Готов к работе')
+        self.detail.setText('Новая карта: результат предыдущей проверки сброшен.')
+        self.set_busy(False)
+        self.progress.setValue(0)
         for combo in (self.scene, self.meta_asset):
             combo.clear()
             combo.addItem('Определить автоматически', '')
@@ -474,7 +495,7 @@ class MainWindow(QMainWindow):
         self.save()
         self.detail.setText('Параметры сброшены. Пути проектов, Unity и профилей Foliage сохранены.')
 
-    def start(self, validate_only=False):
+    def start(self, validate_only=False, build_only=False):
         try:
             self.save()
             ui = self.settings['ui']
@@ -484,10 +505,12 @@ class MainWindow(QMainWindow):
                 if not self.settings['config'][key]:
                     raise ValueError('Заполните пути проектов, Unity и папок результатов')
             inputs = {key: ui.get(key, '') for key in ('package', 'scene', 'meta_asset')}
+            inputs['overrides_enabled'] = ui['overrides_enabled']
             if ui['overrides_enabled']:
                 inputs.update({key: ui[key] for key in self.override_fields if ui[key]})
             request = create_request(self.settings['config'], inputs, ui['platforms'],
-                validate_only=validate_only, ignore_warnings=ui['ignore_warnings'])
+                validate_only=validate_only, build_only=build_only, ignore_warnings=ui['ignore_warnings'],
+                validation_source=self.validation_source if build_only else None)
             self.run_directory = request.parent
             self.settings['ui']['last_run'] = str(self.run_directory)
             self.store.save(self.settings)
@@ -495,11 +518,14 @@ class MainWindow(QMainWindow):
             self.notified = None
             self.cancelling = False
             self.log.clear()
+            if not build_only:
+                self.validation_source = None
             for metric in self.metrics.values():
                 metric.setText('—')
             self.launch(request)
         except Exception as error:
-            self.status.setText('Проверьте настройки')
+            self.run_directory = None  # Do not let an older run overwrite the preflight reason.
+            self.status.setText(STATES.get(getattr(error, 'status', None), 'Проверьте настройки'))
             self.detail.setText(str(error))
 
     def launch(self, request, extra=None):
@@ -557,6 +583,7 @@ class MainWindow(QMainWindow):
         self.reset_button.setEnabled(not busy and not paused)
         self.validate_button.setEnabled(not busy and not paused)
         self.build_button.setEnabled(not busy and not paused)
+        self.build_only_button.setEnabled(not busy and not paused)
         self.cancel_button.setEnabled((busy or paused) and not self.cancelling)
         self.progress.setRange(0, 0 if busy else 1)
         self.progress.setValue(0 if busy else 1)
@@ -569,6 +596,8 @@ class MainWindow(QMainWindow):
             self.set_busy(self.active_process() or is_running(self.run_directory))
             return
         self.run = run
+        if run.get('validation', {}).get('status') in ('PASS', 'WARNING'):
+            self.validation_source = run.get('validation_source') or str(self.run_directory)
         running = self.active_process() or is_running(self.run_directory)
         paused = run['status'] == 'NEEDS_DECISION'
         interrupted = run['status'] == 'RUNNING' and not running
@@ -588,6 +617,8 @@ class MainWindow(QMainWindow):
             name = 'CameraTest' if key == 'validation' else PLATFORMS[key].label
             row = completed.get(key)
             text = STATES.get(row['status'], row['status']) if row else '…' if running and key == run.get('current_step') else '—'
+            if key == 'validation' and run.get('build_only'):
+                text = 'Предыдущий замер' if run.get('validation_source') else 'Не запускался'
             label.setText(name + '   ' + text)
         stats = run.get('validation') or {}
         if run.get('current_job'):

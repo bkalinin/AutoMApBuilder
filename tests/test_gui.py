@@ -72,6 +72,41 @@ class GuiTests(unittest.TestCase):
         self.window.save()
         self.assertEqual(self.window.store.load()['ui']['scene'], 'Assets/Map/B.unity')
 
+    def test_build_button_skips_validation_and_new_package_clears_old_result(self):
+        package = self.root / 'first.unitypackage'
+        package.touch()
+        self.window.package.setText(str(package))
+        self.window.validation_source = str(self.root / 'validated')
+        self.window.metrics['maxTris'].setText('1700')
+        with patch.object(self.window, 'launch') as launch:
+            self.window.build_only_button.click()
+        from mapcombiner.gui import read_json
+        request = read_json(launch.call_args.args[0])
+        self.assertTrue(request['build_only'])
+        self.assertEqual(request['validation_source'], str(self.root / 'validated'))
+        old = self.window.run_directory
+        write_json(old / 'run-manifest.json', {'status': 'PASS', 'jobs': [], 'validation': {'status': 'PASS', 'maxTris': 1700}})
+        self.window.package.setText(str(self.root / 'second.unitypackage'))
+        self.window.poll()
+        self.assertIsNone(self.window.run_directory)
+        self.assertIsNone(self.window.validation_source)
+        self.assertEqual(self.window.metrics['maxTris'].text(), '—')
+        self.assertFalse(self.window.report_button.isEnabled())
+        self.assertEqual(self.window.settings['ui']['last_run'], '')
+
+    def test_empty_preview_overrides_show_reason_without_starting_worker(self):
+        package = self.root / 'map.unitypackage'
+        package.touch()
+        self.window.package.setText(str(package))
+        self.window.overrides.setChecked(True)
+        with patch.object(self.window, 'launch') as launch:
+            self.window.build_only_button.click()
+        launch.assert_not_called()
+        self.assertEqual(self.window.status.text(), 'Сборка остановлена')
+        self.assertIn('Preview и Preview Mini', self.window.detail.text())
+        self.window.poll()
+        self.assertIn('Preview и Preview Mini', self.window.detail.text())
+
     def test_reset_preserves_custom_paths_and_manual_area_roundtrip(self):
         self.window.paths['steam_repo'].setText('D:/Custom Uploader')
         self.window.area_mode.setCurrentIndex(1)

@@ -25,6 +25,14 @@ def ancestors(path):
             result.update((parent.as_posix(), parent.as_posix() + ".meta"))
     return result
 
+def writable_material_paths(repo, entries):
+    # Only new, standalone material files actually imported by this job.
+    # Anything already present in the restored baseline (including SDK/shared assets)
+    # stays outside this allowlist, even when a package supplies a different GUID.
+    return sorted(entry.path for entry in entries if entry.allowed and not entry.directory
+        and entry.path.lower().endswith('.mat') and not confined(repo, entry.path).exists())
+
+
 def build(config, source, scene=None, meta=None, preview=None, icon=None, *, operation="build", platform="steam", meta_asset=None, cancel_file=None, on_job=None):
     if operation not in ("build", "validate", "preflight"):
         raise ValueError("Unsupported job operation")
@@ -125,6 +133,7 @@ def build(config, source, scene=None, meta=None, preview=None, icon=None, *, ope
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(job / ("override-" + key + destination.suffix), destination)
         cancellation.check(job, cancel_file)
+        writable_materials = writable_material_paths(repo, package.entries)
         filtered = package.repack(job / "sanitized.unitypackage")
         unity_worker.install(repo, config.platform)
         request = {
@@ -134,6 +143,7 @@ def build(config, source, scene=None, meta=None, preview=None, icon=None, *, ope
             "mapFixes": config.map_fixes.request(),
             "scenePath": scene or "", "metaAssetPath": meta_asset or "", **override_paths,
             "cancelFile": str(Path(cancel_file).resolve()) if cancel_file else "",
+            "writableMaterialPaths": writable_materials,
             "assetPaths": sorted({entry.path for entry in package.entries if entry.allowed} |
                                  {path for item in skipped for path in item["baseline_paths"]}),
         }
@@ -147,6 +157,11 @@ def build(config, source, scene=None, meta=None, preview=None, icon=None, *, ope
         report["unity_result"] = result
         cancellation.check(job, cancel_file)
         if operation == "build":
+            from .material_trace import trace_job
+            emit("materials", "Tracing scene bindings, saved materials and actual bundle materials")
+            report["material_trace"] = trace_job(repo, job, Path(result["externalPath"]) / (result["sceneName"] + ".bundle"))
+            emit("materials", "Material trace: " + report["material_trace"]["status"] + "; " + str(job / "material-trace.txt"))
+            cancellation.check(job, cancel_file)
             emit("package", "Verifying External output and creating a non-overwriting ZIP")
             destination = archive(result["externalPath"], result["sceneName"], config.output_root, config.platform.zip_label)
             report["archive"] = str(destination)
@@ -191,7 +206,7 @@ def build(config, source, scene=None, meta=None, preview=None, icon=None, *, ope
         scene_name = state.get("sceneName") or "Unresolved"
         logdir = config.output_root / datetime.now().strftime("%Y-%m-%d") / "Log" / scene_name / job_id
         logdir.mkdir(parents=True, exist_ok=True)
-        for filename in ("material-validation.json", "material-validation.txt", "request.json", "Steam.log", "PlayStation.log", "Xbox.log", "Validation.log", "validation.json", "validation.txt", "validation-progress.json", "unity-result.json", "unity-state.json", "job-manifest.json", "import-manifest.json", "recovery.json"):
+        for filename in ("material-trace.json", "material-trace.txt", "material-trace-imported.json", "material-trace-prepared.json", "material-trace-mirrored.json", "material-validation.json", "material-validation.txt", "request.json", "Steam.log", "PlayStation.log", "Xbox.log", "Validation.log", "validation.json", "validation.txt", "validation-progress.json", "unity-result.json", "unity-state.json", "job-manifest.json", "import-manifest.json", "recovery.json"):
             if (job / filename).is_file():
                 shutil.copyfile(job / filename, logdir / filename)
         report["log_directory"] = str(logdir)

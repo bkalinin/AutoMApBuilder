@@ -1,0 +1,36 @@
+Дополнительная сверка задания 20260916-170056-8240020c. Данные .mat карты сохранены до cleanup;
+два неизменённых стандартных HDRP-материала прочитаны после cleanup. Исходный отчёт задания сохранён.
+
+Material trace: MATCH
+Диагностика привязок, Shader, Material Type и Diffusion Profile. Внешний вид в игре не проверяется.
+Результат не добавляет BLOCKER и не запускает CameraTest.
+Слоты: {'MATCH': 341}
+
+
+MATCH: root/tamadatrees/OBJ145 / MeshRenderer / slot 0
+imported: Assets/MapResources/tamada/material/Wood_Board_Cork.mat | guid=64d836b2b21667e45b0f9362deea89e4 | bundle ID= | shader=Shader Graphs/FoliageSimple | profile=66567e56d8808594999fbe41b68d83d1 | hash=1076100925
+prepared: Assets/MapResources/tamada/material/Wood_Board_Cork.mat | guid=64d836b2b21667e45b0f9362deea89e4 | bundle ID= | shader=HDRP/Lit | profile=4ce80190f8d308243a16d19290d0b45b | hash=1076270218
+saved: Assets/MapResources/tamada/material/Wood_Board_Cork.mat | guid=64d836b2b21667e45b0f9362deea89e4 | bundle ID= | shader=6e4ae4064600d784cac1e41a9e6f2e59 | profile=4ce80190f8d308243a16d19290d0b45b | hash=1076270218
+mirrored: Assets/MapResources/tamada/material/Wood_Board_Cork.mat | guid=64d836b2b21667e45b0f9362deea89e4 | bundle ID= | shader=HDRP/Lit | profile=4ce80190f8d308243a16d19290d0b45b | hash=1076270218
+bundled: Wood_Board_Cork | guid= | bundle ID=110 | shader=HDRP/Lit | profile=4ce80190f8d308243a16d19290d0b45b | hash=1076270218
+
+MATCH: root/tamadatrees/OBJ146 / MeshRenderer / slot 0
+imported: Assets/MapResources/tamada/texture/Materials/OTPT_03.mat | guid=fe354cc5291ce7646908b0eb95a90cc1 | bundle ID= | shader=Shader Graphs/FoliageSimple | profile=66567e56d8808594999fbe41b68d83d1 | hash=1076100925
+prepared: Assets/MapResources/tamada/texture/Materials/OTPT_03.mat | guid=fe354cc5291ce7646908b0eb95a90cc1 | bundle ID= | shader=HDRP/Lit | profile=4ce80190f8d308243a16d19290d0b45b | hash=1076270218
+saved: Assets/MapResources/tamada/texture/Materials/OTPT_03.mat | guid=fe354cc5291ce7646908b0eb95a90cc1 | bundle ID= | shader=6e4ae4064600d784cac1e41a9e6f2e59 | profile=4ce80190f8d308243a16d19290d0b45b | hash=1076270218
+mirrored: Assets/MapResources/tamada/texture/Materials/OTPT_03.mat | guid=fe354cc5291ce7646908b0eb95a90cc1 | bundle ID= | shader=HDRP/Lit | profile=4ce80190f8d308243a16d19290d0b45b | hash=1076270218
+bundled: OTPT_03 | guid= | bundle ID=232 | shader=HDRP/Lit | profile=4ce80190f8d308243a16d19290d0b45b | hash=1076270218
+
+MATCH: root/tamadatrees/OBJ172 / MeshRenderer / slot 0
+imported: Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat | guid=296f6ce9a2fd9c7489be3b56c7b3aaf0 | bundle ID= | shader=Shader Graphs/FoliageSimple | profile=66567e56d8808594999fbe41b68d83d1 | hash=1076100925
+prepared: Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat | guid=296f6ce9a2fd9c7489be3b56c7b3aaf0 | bundle ID= | shader=HDRP/Lit | profile=4ce80190f8d308243a16d19290d0b45b | hash=1076270218
+saved: Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat | guid=296f6ce9a2fd9c7489be3b56c7b3aaf0 | bundle ID= | shader=6e4ae4064600d784cac1e41a9e6f2e59 | profile=4ce80190f8d308243a16d19290d0b45b | hash=1076270218
+mirrored: Assets/MapResources/tamada/texture/Materials/Tree lime 3.mat | guid=296f6ce9a2fd9c7489be3b56c7b3aaf0 | bundle ID= | shader=HDRP/Lit | profile=4ce80190f8d308243a16d19290d0b45b | hash=1076270218
+bundled: Tree lime 3 | guid= | bundle ID=234 | shader=HDRP/Lit | profile=4ce80190f8d308243a16d19290d0b45b | hash=1076270218
+
+MATCH: root/tamadatrees/OBJ183 / MeshRenderer / slot 0
+imported: Assets/MapResources/tamada/material/WinterTrees.mat | guid=07af1583738ecf04184c58bde516c1e0 | bundle ID= | shader=Shader Graphs/FoliageSimple | profile=66567e56d8808594999fbe41b68d83d1 | hash=1076100925
+prepared: Assets/MapResources/tamada/material/WinterTrees.mat | guid=07af1583738ecf04184c58bde516c1e0 | bundle ID= | shader=HDRP/Lit | profile=4ce80190f8d308243a16d19290d0b45b | hash=1076270218
+saved: Assets/MapResources/tamada/material/WinterTrees.mat | guid=07af1583738ecf04184c58bde516c1e0 | bundle ID= | shader=6e4ae4064600d784cac1e41a9e6f2e59 | profile=4ce80190f8d308243a16d19290d0b45b | hash=1076270218
+mirrored: Assets/MapResources/tamada/material/WinterTrees.mat | guid=07af1583738ecf04184c58bde516c1e0 | bundle ID= | shader=HDRP/Lit | profile=4ce80190f8d308243a16d19290d0b45b | hash=1076270218
+bundled: WinterTrees | guid= | bundle ID=108 | shader=HDRP/Lit | profile=4ce80190f8d308243a16d19290d0b45b | hash=1076270218

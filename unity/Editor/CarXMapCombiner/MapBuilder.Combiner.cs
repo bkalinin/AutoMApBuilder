@@ -63,6 +63,7 @@ namespace Editor
 #pragma warning disable 618
                 if (ValidateSceneAndMirror()) throw new JobException("Uploader scene/component validation failed");
 #pragma warning restore 618
+                MaterialTrace.CaptureMirrored(m_scenePath);
                 var options = BuildAssetBundleOptions.UncompressedAssetBundle | BuildAssetBundleOptions.StrictMode;
                 BuildChecked(mapFolder, sceneName + ".bundle", m_scenePath, options, platform.target);
                 completed.mapBuilt = true;

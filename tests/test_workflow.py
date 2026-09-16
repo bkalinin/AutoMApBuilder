@@ -137,6 +137,57 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(Path(rebuilt['steam_repo']), Path(result['config']['steam_repo']))
         self.assertEqual(rebuilt['validation'], result['config']['validation'])
 
+    def test_build_only_reuses_measurement_without_repeating_cameratest(self):
+        first = self.request(validate_only=True)
+        workflow.execute(first, runner=self.runner('WARNING'))
+        second = workflow.create_request(self.config, {'package': str(self.package)}, ['steam', 'xbox'],
+            build_only=True, validation_source=first.parent)
+        result = workflow.execute(second, runner=self.runner())
+        self.assertEqual(self.calls, [('validate', 'steam'), ('build', 'steam'), ('build', 'xbox')])
+        self.assertEqual(result['validation']['maxTris'], 17)
+        self.assertEqual(result['validation_source'], str(first.parent))
+        self.assertTrue(result['build_only'])
+        self.assertIn('CameraTest', result['decisions'][0]['reason'])
+        # A new package is allowed to build, but must not inherit old measurements.
+        self.package.write_bytes(b'new map')
+        third = workflow.create_request(self.config, {'package': str(self.package)}, ['steam'],
+            build_only=True, validation_source=first.parent)
+        changed = workflow.execute(third, runner=self.runner())
+        self.assertNotIn('validation', changed)
+        self.assertEqual(changed['status'], 'PASS')
+
+    def test_override_preflight_blocks_before_runner_and_meta_is_optional(self):
+        for values, message in [({}, 'Preview и Preview Mini'), ({'preview': str(self.package)}, 'Preview Mini')]:
+            with self.subTest(values=values), self.assertRaises(PipelineError) as error:
+                workflow.create_request(self.config, {'package': str(self.package), 'overrides_enabled': True, **values}, ['steam'])
+            self.assertEqual(error.exception.status, 'BLOCKER')
+            self.assertIn(message, str(error.exception))
+        # Also enforce it when a saved request is invoked directly, not through the UI.
+        request = self.request(build_only=True)
+        data = json.loads(request.read_text())
+        data['inputs']['overrides_enabled'] = True
+        write_json(request, data)
+        with patch.object(workflow, 'build') as runner:
+            result = workflow.execute(request)
+        self.assertEqual(result['status'], 'BLOCKER')
+        runner.assert_not_called()
+        image = self.root / 'preview.png'
+        image.touch()
+        accepted = workflow.create_request(self.config, {'package': str(self.package), 'overrides_enabled': True,
+            'preview': str(image), 'icon': str(image)}, ['steam'], build_only=True)
+        result = workflow.execute(accepted, runner=self.runner())
+        self.assertEqual(result['status'], 'PASS')
+
+    def test_only_new_imported_standalone_materials_are_writable(self):
+        from mapcombiner.pipeline import writable_material_paths
+        from mapcombiner.package_import import AssetEntry
+        repo = self.root / 'repo'
+        (repo / 'Assets').mkdir(parents=True)
+        (repo / 'Assets/Baseline.mat').touch()
+        entries = [AssetEntry(str(i), path, False, allowed, '') for i, (path, allowed) in enumerate([
+            ('Assets/Map.mat', True), ('Assets/Baseline.mat', True), ('Assets/Skipped.mat', False), ('Assets/Model.fbx', True)])]
+        self.assertEqual(writable_material_paths(repo, entries), ['Assets/Map.mat'])
+
     def test_report_escapes_file_and_error_text(self):
         html = render_run({'run_id': 'test', 'status': 'FAILED', 'message': '<script>bad</script>',
             'inputs': {'package': '<img src=x onerror=bad>'}})

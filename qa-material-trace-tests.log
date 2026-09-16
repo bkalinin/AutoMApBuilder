@@ -1,0 +1,136 @@
+test_case_collisions_rejected (test_foundation.PackageTests.test_case_collisions_rejected) ... ok
+test_filter_executable_preserve_native_models_and_guid (test_foundation.PackageTests.test_filter_executable_preserve_native_models_and_guid) ... ok
+test_infrastructure_overwrite_rejected (test_foundation.PackageTests.test_infrastructure_overwrite_rejected) ... ok
+test_links_rejected (test_foundation.PackageTests.test_links_rejected) ... ok
+test_traversal_windows_reserved_and_separators (test_foundation.PackageTests.test_traversal_windows_reserved_and_separators) ... ok
+test_missing_empty_or_nonbundle_outputs_fail (test_foundation.PackagingTests.test_missing_empty_or_nonbundle_outputs_fail) ... ok
+test_zip_has_exact_payloads_and_versions_without_overwrite (test_foundation.PackagingTests.test_zip_has_exact_payloads_and_versions_without_overwrite) ... ok
+test_detect_index_change_without_resetting_it (test_foundation.TransactionTests.test_detect_index_change_without_resetting_it) ... ok
+test_index_baseline_preserves_staging_sdk_and_ignored (test_foundation.TransactionTests.test_index_baseline_preserves_staging_sdk_and_ignored) ... ok
+test_recovery_uses_recorded_index (test_foundation.TransactionTests.test_recovery_uses_recorded_index) ... ok
+test_reject_outside_cleanup (test_foundation.TransactionTests.test_reject_outside_cleanup) ... ok
+test_skip_baseline_guid_for_same_or_different_path_and_payload (test_foundation.TransactionTests.test_skip_baseline_guid_for_same_or_different_path_and_payload) ... ok
+test_build_button_skips_validation_and_new_package_clears_old_result (test_gui.GuiTests.test_build_button_skips_validation_and_new_package_clears_old_result) ... ok
+test_drop_local_package_and_create_real_workflow_request (test_gui.GuiTests.test_drop_local_package_and_create_real_workflow_request) ... ok
+test_empty_preview_overrides_show_reason_without_starting_worker (test_gui.GuiTests.test_empty_preview_overrides_show_reason_without_starting_worker) ... ok
+test_reset_preserves_custom_paths_and_manual_area_roundtrip (test_gui.GuiTests.test_reset_preserves_custom_paths_and_manual_area_roundtrip) ... ok
+test_warning_continuation_and_scene_selection_enable_the_right_controls (test_gui.GuiTests.test_warning_continuation_and_scene_selection_enable_the_right_controls) ... ok
+test_explicit_user_profile_and_independent_toggles (test_map_fixes.MapFixTests.test_explicit_user_profile_and_independent_toggles) ... ok
+test_json_settings_reach_worker_request (test_map_fixes.MapFixTests.test_json_settings_reach_worker_request) ... ok
+test_preflight_never_starts_a_render_worker (test_map_fixes.MapFixTests.test_preflight_never_starts_a_render_worker) ... ok
+test_combined_slot_chain_retains_correct_profile (test_material_trace.MaterialTraceTests.test_combined_slot_chain_retains_correct_profile) ... ok
+test_duplicate_names_are_not_resolved_by_guessing (test_material_trace.MaterialTraceTests.test_duplicate_names_are_not_resolved_by_guessing) ... ok
+test_missing_and_extra_renderer_slots_are_reported (test_material_trace.MaterialTraceTests.test_missing_and_extra_renderer_slots_are_reported) ... ok
+test_missing_evidence_stays_diagnostic_without_a_false_pass (test_material_trace.MaterialTraceTests.test_missing_evidence_stays_diagnostic_without_a_false_pass) ... ok
+test_profile_lost_in_bundle_is_not_a_match (test_material_trace.MaterialTraceTests.test_profile_lost_in_bundle_is_not_a_match) ... ok
+test_public_hdrp_package_path_is_resolved_without_guessing_versions (test_material_trace.MaterialTraceTests.test_public_hdrp_package_path_is_resolved_without_guessing_versions) ... ok
+test_run_report_exposes_trace_without_changing_build_status (test_material_trace.MaterialTraceTests.test_run_report_exposes_trace_without_changing_build_status) ... ok
+test_saved_file_is_read_by_local_id_and_float_bits (test_material_trace.MaterialTraceTests.test_saved_file_is_read_by_local_id_and_float_bits) ... ok
+test_wrong_copy_binding_is_detected_before_bundle (test_material_trace.MaterialTraceTests.test_wrong_copy_binding_is_detected_before_bundle) ... ok
+test_platform_keeps_repo_profile_and_metadata_together (test_platforms.PlatformTests.test_platform_keeps_repo_profile_and_metadata_together) ... ok
+test_ps_launch_uses_ps_repo_and_target_in_batch_editor (test_platforms.PlatformTests.test_ps_launch_uses_ps_repo_and_target_in_batch_editor) ... ok
+test_ps_zip_does_not_replace_steam_or_previous_ps (test_platforms.PlatformTests.test_ps_zip_does_not_replace_steam_or_previous_ps) ... ok
+test_xbox_uses_unity6_gamecore_and_keeps_meta_xboxone (test_platforms.PlatformTests.test_xbox_uses_unity6_gamecore_and_keeps_meta_xboxone) ... ok
+test_cancel_is_an_explicit_job_file (test_validation.ValidationTests.test_cancel_is_an_explicit_job_file) ... ok
+test_explicit_fixed_config_and_screenshots_off (test_validation.ValidationTests.test_explicit_fixed_config_and_screenshots_off) ... ok
+[validation] Starting normal Editor CameraTest; C:\Users\user\AppData\Local\Temp\tmpvnuea7zq
+test_validation_runs_preparation_then_render_worker (test_validation.ValidationTests.test_validation_runs_preparation_then_render_worker) ... ok
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-5bd2e5b9", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-5bd2e5b9", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-5bd2e5b9", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-5bd2e5b9", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-5bd2e5b9", "status": "WARNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-4efb9217", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-4efb9217", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-4efb9217", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-4efb9217", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-4efb9217", "status": "RUNNING", "step": "xbox"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-4efb9217", "status": "RUNNING", "step": "xbox"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-4efb9217", "status": "RUNNING", "step": "xbox"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-4efb9217", "status": "PASS", "step": "xbox"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-c0ff0f12", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-c0ff0f12", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-c0ff0f12", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-c0ff0f12", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpp14tccxm\\state\\runs\\20260916-170835-c0ff0f12", "status": "PASS", "step": "steam"}
+test_build_only_reuses_measurement_without_repeating_cameratest (test_workflow.WorkflowTests.test_build_only_reuses_measurement_without_repeating_cameratest) ... ok
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmph9bds1bi\\state\\runs\\20260916-170835-d21a55d1", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmph9bds1bi\\state\\runs\\20260916-170835-d21a55d1", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmph9bds1bi\\state\\runs\\20260916-170835-d21a55d1", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmph9bds1bi\\state\\runs\\20260916-170835-d21a55d1", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmph9bds1bi\\state\\runs\\20260916-170835-d21a55d1", "status": "CANCELLED", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmph9bds1bi\\state\\runs\\20260916-170835-a9f3f4ed", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmph9bds1bi\\state\\runs\\20260916-170835-a9f3f4ed", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmph9bds1bi\\state\\runs\\20260916-170835-a9f3f4ed", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmph9bds1bi\\state\\runs\\20260916-170835-a9f3f4ed", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmph9bds1bi\\state\\runs\\20260916-170835-a9f3f4ed", "status": "NEEDS_DECISION", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmph9bds1bi\\state\\runs\\20260916-170835-a9f3f4ed", "status": "CANCELLED", "step": "validation"}
+test_cancel_between_jobs_and_during_warning_pause (test_workflow.WorkflowTests.test_cancel_between_jobs_and_during_warning_pause) ... ok
+test_cancel_stops_only_the_owned_batch_process (test_workflow.WorkflowTests.test_cancel_stops_only_the_owned_batch_process) ... ok
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpoxyvyzng\\state\\runs\\20260916-170835-cf36e399", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpoxyvyzng\\state\\runs\\20260916-170835-cf36e399", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpoxyvyzng\\state\\runs\\20260916-170835-cf36e399", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpoxyvyzng\\state\\runs\\20260916-170835-cf36e399", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpoxyvyzng\\state\\runs\\20260916-170835-cf36e399", "status": "NEEDS_DECISION", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpoxyvyzng\\state\\runs\\20260916-170835-cf36e399", "status": "NEEDS_DECISION", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpoxyvyzng\\state\\runs\\20260916-170835-cf36e399", "status": "NeedsUserInput", "step": "validation"}
+test_changed_input_blocks_warning_resume (test_workflow.WorkflowTests.test_changed_input_blocks_warning_resume) ... ok
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp8rsvjqly\\state\\runs\\20260916-170835-981003a7", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp8rsvjqly\\state\\runs\\20260916-170835-981003a7", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp8rsvjqly\\state\\runs\\20260916-170835-981003a7", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp8rsvjqly\\state\\runs\\20260916-170835-981003a7", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp8rsvjqly\\state\\runs\\20260916-170835-981003a7", "status": "FAILED", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp8rsvjqly\\state\\runs\\20260916-170835-e422c340", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp8rsvjqly\\state\\runs\\20260916-170835-e422c340", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp8rsvjqly\\state\\runs\\20260916-170835-e422c340", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp8rsvjqly\\state\\runs\\20260916-170835-e422c340", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp8rsvjqly\\state\\runs\\20260916-170835-e422c340", "status": "BLOCKER", "step": "validation"}
+test_cleanup_failure_and_blocker_stop_the_queue (test_workflow.WorkflowTests.test_cleanup_failure_and_blocker_stop_the_queue) ... ok
+test_only_new_imported_standalone_materials_are_writable (test_workflow.WorkflowTests.test_only_new_imported_standalone_materials_are_writable) ... ok
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpodh8_jjw\\state\\runs\\20260916-170835-009041be", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpodh8_jjw\\state\\runs\\20260916-170835-009041be", "status": "BLOCKER", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpodh8_jjw\\state\\runs\\20260916-170835-ff746f88", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpodh8_jjw\\state\\runs\\20260916-170835-ff746f88", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpodh8_jjw\\state\\runs\\20260916-170835-ff746f88", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpodh8_jjw\\state\\runs\\20260916-170835-ff746f88", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpodh8_jjw\\state\\runs\\20260916-170835-ff746f88", "status": "PASS", "step": "steam"}
+test_override_preflight_blocks_before_runner_and_meta_is_optional (test_workflow.WorkflowTests.test_override_preflight_blocks_before_runner_and_meta_is_optional) ... ok
+test_report_escapes_file_and_error_text (test_workflow.WorkflowTests.test_report_escapes_file_and_error_text) ... ok
+test_settings_roundtrip_and_reset_keep_paths_and_selected_profiles (test_workflow.WorkflowTests.test_settings_roundtrip_and_reset_keep_paths_and_selected_profiles) ... ok
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp2q0xyiv_\\state\\runs\\20260916-170835-1f4617b4", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp2q0xyiv_\\state\\runs\\20260916-170835-1f4617b4", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp2q0xyiv_\\state\\runs\\20260916-170835-1f4617b4", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp2q0xyiv_\\state\\runs\\20260916-170835-1f4617b4", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp2q0xyiv_\\state\\runs\\20260916-170835-1f4617b4", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp2q0xyiv_\\state\\runs\\20260916-170835-1f4617b4", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp2q0xyiv_\\state\\runs\\20260916-170835-1f4617b4", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp2q0xyiv_\\state\\runs\\20260916-170835-1f4617b4", "status": "RUNNING", "step": "playstation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp2q0xyiv_\\state\\runs\\20260916-170835-1f4617b4", "status": "RUNNING", "step": "playstation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp2q0xyiv_\\state\\runs\\20260916-170835-1f4617b4", "status": "RUNNING", "step": "playstation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp2q0xyiv_\\state\\runs\\20260916-170835-1f4617b4", "status": "RUNNING", "step": "xbox"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp2q0xyiv_\\state\\runs\\20260916-170835-1f4617b4", "status": "RUNNING", "step": "xbox"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp2q0xyiv_\\state\\runs\\20260916-170835-1f4617b4", "status": "RUNNING", "step": "xbox"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmp2q0xyiv_\\state\\runs\\20260916-170835-1f4617b4", "status": "WARNING", "step": "xbox"}
+test_validation_once_then_canonical_order_and_warning_authorization (test_workflow.WorkflowTests.test_validation_once_then_canonical_order_and_warning_authorization) ... ok
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpzgtrxtby\\state\\runs\\20260916-170836-2589f341", "status": "RUNNING", "step": "inspect"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpzgtrxtby\\state\\runs\\20260916-170836-2589f341", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpzgtrxtby\\state\\runs\\20260916-170836-2589f341", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpzgtrxtby\\state\\runs\\20260916-170836-2589f341", "status": "RUNNING", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpzgtrxtby\\state\\runs\\20260916-170836-2589f341", "status": "NEEDS_DECISION", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpzgtrxtby\\state\\runs\\20260916-170836-2589f341", "status": "NEEDS_DECISION", "step": "validation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpzgtrxtby\\state\\runs\\20260916-170836-2589f341", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpzgtrxtby\\state\\runs\\20260916-170836-2589f341", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpzgtrxtby\\state\\runs\\20260916-170836-2589f341", "status": "RUNNING", "step": "steam"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpzgtrxtby\\state\\runs\\20260916-170836-2589f341", "status": "RUNNING", "step": "playstation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpzgtrxtby\\state\\runs\\20260916-170836-2589f341", "status": "RUNNING", "step": "playstation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpzgtrxtby\\state\\runs\\20260916-170836-2589f341", "status": "RUNNING", "step": "playstation"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpzgtrxtby\\state\\runs\\20260916-170836-2589f341", "status": "RUNNING", "step": "xbox"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpzgtrxtby\\state\\runs\\20260916-170836-2589f341", "status": "RUNNING", "step": "xbox"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpzgtrxtby\\state\\runs\\20260916-170836-2589f341", "status": "RUNNING", "step": "xbox"}
+[run] {"directory": "C:\\Users\\user\\AppData\\Local\\Temp\\tmpzgtrxtby\\state\\runs\\20260916-170836-2589f341", "status": "WARNING", "step": "xbox"}
+test_warning_pause_and_explicit_resume_do_not_repeat_validation (test_workflow.WorkflowTests.test_warning_pause_and_explicit_resume_do_not_repeat_validation) ... ok
+
+----------------------------------------------------------------------
+Ran 47 tests in 9.126s
+
+OK

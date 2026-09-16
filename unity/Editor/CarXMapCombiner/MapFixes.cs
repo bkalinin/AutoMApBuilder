@@ -26,7 +26,7 @@ namespace CarXMapCombiner
     [Serializable] public class MapFixReport
     {
         public string status = "PASS", foliageProfile;
-        public int materialsSeen, treeMaterials, foliageMaterials, materialCopies, volumeCopies;
+        public int materialsSeen, treeMaterials, foliageMaterials, materialsEditedInPlace, materialCopies, volumeCopies;
         public List<MaterialFinding> warnings = new List<MaterialFinding>();
         public List<Change> changes = new List<Change>();
         public void Record(string asset, string property, object before, object after, string reason)
@@ -55,17 +55,39 @@ namespace CarXMapCombiner
         static string Asset(UnityEngine.Object obj) => obj == null ? "null" : string.IsNullOrEmpty(AssetDatabase.GetAssetPath(obj)) ? obj.name : AssetDatabase.GetAssetPath(obj);
         static DiffusionProfileSettings Profile(Material material) => material.HasProperty("_DiffusionProfileAsset") ? HDMaterial.GetDiffusionProfile(material) : null;
 
+        static bool TranslucentLit(Material material) => material.shader != null && material.shader.name == "HDRP/Lit"
+            && material.HasProperty("_MaterialID") && Mathf.RoundToInt(material.GetFloat("_MaterialID")) == 5; // HDRP LitTranslucent (16/17).
+        static uint ProfileHash(DiffusionProfileSettings profile)
+        {
+            // The HDRP profile field is internal; read its serialized hash through the Editor API.
+            var hash = new SerializedObject(profile).FindProperty("profile.hash");
+            if (hash == null) throw new JobException("Diffusion Profile has no serialized hash: " + Asset(profile));
+            return unchecked((uint)hash.longValue);
+        }
+        static bool ProfileMatches(Material material, DiffusionProfileSettings expected) => expected != null
+            && Profile(material) == expected && material.HasProperty("_DiffusionProfileHash")
+            && BitConverter.ToUInt32(BitConverter.GetBytes(material.GetFloat("_DiffusionProfileHash")), 0) == ProfileHash(expected);
+        static Material[] Materials(Renderer renderer) => renderer is BillboardRenderer billboard && billboard.billboard != null
+            ? new[] { billboard.billboard.material } : renderer.sharedMaterials;
+
         public static void Classify(Renderer renderer, Material material, out bool tree, out bool foliage)
         {
             string materialName = material.name;
             string context = ObjectPath(renderer.transform);
             string direct = renderer.name + " " + materialName + " " + (material.shader != null ? material.shader.name : "");
             var assigned = Profile(material);
+            string assetPath = AssetDatabase.GetAssetPath(material);
+            string textures = string.Join(" ", new[] { "_BaseColorMap", "_BaseMap", "_MainTex", "_UnlitColorMap" }
+                .Where(material.HasProperty).Select(p => material.GetTexture(p)).Where(t => t != null).Select(Asset));
             bool foliageProfile = assigned != null && Words(assigned.name, LeafWords);
-            tree = Words(context, TreeWords) || Words(direct, TreeWords + "|" + Species)
-                || Words(AssetDatabase.GetAssetPath(material), TreeWords) || foliageProfile;
+            // Combined meshes often retain generic renderer/material names. A Lit Translucent
+            // material with no profile is the explicit foliage repair case, independent of names.
+            bool missingTranslucentProfile = TranslucentLit(material) && assigned == null;
+            tree = Words(context, TreeWords) || Words(direct + " " + assetPath + " " + textures, TreeWords + "|" + Species)
+                || foliageProfile || missingTranslucentProfile;
             bool bark = Words(materialName, "bark|trunk|branch|branches");
-            foliage = tree && !bark && (Words(direct, LeafWords) || Words(context, LeafWords) || foliageProfile
+            foliage = missingTranslucentProfile || tree && !bark && (Words(direct + " " + assetPath + " " + textures, LeafWords)
+                || Words(context, LeafWords) || foliageProfile || TranslucentLit(material)
                 || renderer is BillboardRenderer || Words(direct, "billboard|impostor"));
         }
 
@@ -87,7 +109,7 @@ namespace CarXMapCombiner
             return profile;
         }
 
-        public static void Apply(Scene scene, MapFixOptions options, MapFixReport report, string folder = null)
+        public static void Apply(Scene scene, MapFixOptions options, MapFixReport report, string folder = null, string[] writableMaterialPaths = null)
         {
             folder = folder ?? AutomationBridge.GeneratedRoot + "/MapFixes";
             if (!folder.StartsWith(AutomationBridge.GeneratedRoot + "/", StringComparison.Ordinal))
@@ -101,6 +123,17 @@ namespace CarXMapCombiner
                 foreach (var lod in group.GetLODs())
                     foreach (var renderer in lod.renderers)
                         if (renderer != null && renderer.gameObject.scene == scene) renderers.Add(renderer);
+            var writable = new HashSet<string>(writableMaterialPaths ?? Array.Empty<string>(), StringComparer.Ordinal);
+            var roles = new Dictionary<Material, HashSet<int>>();
+            // Snapshot all uses before editing any material. A material shared by foliage,
+            // trunk and non-tree slots must get separate bindings instead of a global edit.
+            foreach (var renderer in renderers)
+                foreach (var material in Materials(renderer).Where(m => m != null))
+                {
+                    Classify(renderer, material, out bool tree, out bool foliage);
+                    if (!roles.TryGetValue(material, out var uses)) roles.Add(material, uses = new HashSet<int>());
+                    uses.Add(!tree ? -1 : foliage ? 1 : 0);
+                }
             var seen = new HashSet<Material>();
             var trees = new HashSet<Material>();
             var leaves = new HashSet<Material>();
@@ -111,8 +144,7 @@ namespace CarXMapCombiner
                 foreach (var renderer in renderers.OrderBy(r => ObjectPath(r.transform), StringComparer.Ordinal))
                 {
                     var billboard = renderer as BillboardRenderer;
-                    Material[] originals = billboard != null && billboard.billboard != null
-                        ? new[] { billboard.billboard.material } : renderer.sharedMaterials;
+                    Material[] originals = Materials(renderer);
                     var changed = (Material[])originals.Clone();
                     for (int slot = 0; slot < originals.Length; ++slot)
                     {
@@ -135,7 +167,7 @@ namespace CarXMapCombiner
                             report.foliageProfile = Asset(expected);
                         }
                         bool wrongShader = original.shader == null || original.shader.name != "HDRP/Lit";
-                        bool wrongProfile = foliage && (expected == null ? Profile(original) == null : Profile(original) != expected);
+                        bool wrongProfile = foliage && !ProfileMatches(original, expected);
                         bool changeShader = wrongShader && options.auto_fix_foliage_shader;
                         bool changeProfile = wrongProfile && options.auto_fix_foliage_diffusion_profile;
                         if (wrongShader && !changeShader) report.Warn(source, context, "Tree material shader is not HDRP/Lit; shader auto-fix disabled");
@@ -148,17 +180,29 @@ namespace CarXMapCombiner
                             var key = (original, foliage);
                             if (!replacements.TryGetValue(key, out output))
                             {
-                                output = new Material(original) { name = original.name };
-                                string path = AssetDatabase.GenerateUniqueAssetPath(folder + "/" + SafeName(original.name) + (foliage ? "_foliage.mat" : "_tree.mat"));
-                                AssetDatabase.CreateAsset(output, path);
-                                ++report.materialCopies;
-                                report.Record(source, "mapMaterialCopy", source, path, "Keep the source/shared material unchanged");
+                                bool editInPlace = writable.Contains(source) && source.EndsWith(".mat", StringComparison.OrdinalIgnoreCase)
+                                    && AssetDatabase.IsMainAsset(original) && roles[original].Count == 1;
+                                string path = source;
+                                if (editInPlace)
+                                {
+                                    output = original;
+                                    ++report.materialsEditedInPlace;
+                                    report.Record(source, "materialEdit", source, source, "Edit a new imported map material in place; all scene uses have the same role");
+                                }
+                                else
+                                {
+                                    output = new Material(original) { name = original.name };
+                                    path = AssetDatabase.GenerateUniqueAssetPath(folder + "/" + SafeName(original.name) + (foliage ? "_foliage.mat" : "_tree.mat"));
+                                    AssetDatabase.CreateAsset(output, path);
+                                    ++report.materialCopies;
+                                    report.Record(source, "mapMaterialCopy", source, path, "Keep baseline/SDK/embedded materials or materials shared across different roles unchanged");
+                                }
                                 if (changeShader) ConvertShader(output, source, report);
                                 if (foliage && options.auto_fix_foliage_diffusion_profile)
                                 {
                                     var oldProfile = Profile(output);
                                     HDMaterial.SetDiffusionProfile(output, expected);
-                                    if (HDMaterial.GetDiffusionProfile(output) != expected) throw new JobException("HDRP did not retain the requested Diffusion Profile: " + path);
+                                    if (!ProfileMatches(output, expected)) throw new JobException("HDRP did not retain the requested Diffusion Profile: " + path);
                                     report.Record(path, "Diffusion Profile", Asset(oldProfile), Asset(expected), "Use the configured Foliage profile through HDMaterial");
                                 }
                                 if (!HDMaterial.ValidateMaterial(output)) throw new JobException("HDRP material validation failed: " + path);
@@ -167,9 +211,10 @@ namespace CarXMapCombiner
                                 replacements.Add(key, output);
                             }
                             changed[slot] = output;
-                            report.Record(context, "sharedMaterial", source, Asset(output), "Bind the fixed material to this map renderer");
+                            if (output != original)
+                                report.Record(context, "sharedMaterial", source, Asset(output), "Bind the fixed material to this map renderer");
                         }
-                        if (foliage && expected != null && Profile(output) == expected) needsRegistration = true;
+                        if (foliage && ProfileMatches(output, expected)) needsRegistration = true;
                     }
                     if (!originals.SequenceEqual(changed))
                     {

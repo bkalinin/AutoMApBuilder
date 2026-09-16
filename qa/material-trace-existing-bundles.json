@@ -1,0 +1,390 @@
+[
+  {
+    "job": "20260916-113528-93b373ac",
+    "status": "CAPTURED",
+    "bundle_sha256": "1ab0db81dc126582f6ef274a10c47539915c8d27f70f0e09f5891a7a15cc6ec9",
+    "renderer_slots": 341,
+    "translucent_slots": [
+      {
+        "hierarchy": [
+          "root",
+          "tamadatrees",
+          "OBJ146"
+        ],
+        "renderer": "MeshRenderer",
+        "component": 0,
+        "slot": 0,
+        "material": {
+          "present": true,
+          "bundleFile": "BuildPlayer-tamada0.sharedAssets",
+          "pathId": "235",
+          "name": "OTPT_03_foliage",
+          "shader": "HDRP/Lit",
+          "hasMaterialId": true,
+          "materialId": 5.0,
+          "hasProfile": true,
+          "profileGuid": "4ce80190f8d308243a16d19290d0b45b",
+          "profileHash": 1076270218
+        }
+      },
+      {
+        "hierarchy": [
+          "root",
+          "tamadatrees",
+          "OBJ145"
+        ],
+        "renderer": "MeshRenderer",
+        "component": 0,
+        "slot": 0,
+        "material": {
+          "present": true,
+          "bundleFile": "BuildPlayer-tamada0.sharedAssets",
+          "pathId": "238",
+          "name": "Wood_Board_Cork_foliage",
+          "shader": "HDRP/Lit",
+          "hasMaterialId": true,
+          "materialId": 5.0,
+          "hasProfile": true,
+          "profileGuid": "4ce80190f8d308243a16d19290d0b45b",
+          "profileHash": 1076270218
+        }
+      },
+      {
+        "hierarchy": [
+          "root",
+          "tamadatrees",
+          "OBJ183"
+        ],
+        "renderer": "MeshRenderer",
+        "component": 0,
+        "slot": 0,
+        "material": {
+          "present": true,
+          "bundleFile": "BuildPlayer-tamada0.sharedAssets",
+          "pathId": "237",
+          "name": "WinterTrees_foliage",
+          "shader": "HDRP/Lit",
+          "hasMaterialId": true,
+          "materialId": 5.0,
+          "hasProfile": true,
+          "profileGuid": "4ce80190f8d308243a16d19290d0b45b",
+          "profileHash": 1076270218
+        }
+      },
+      {
+        "hierarchy": [
+          "root",
+          "tamadatrees",
+          "OBJ172"
+        ],
+        "renderer": "MeshRenderer",
+        "component": 0,
+        "slot": 0,
+        "material": {
+          "present": true,
+          "bundleFile": "BuildPlayer-tamada0.sharedAssets",
+          "pathId": "236",
+          "name": "Tree_lime_3_foliage",
+          "shader": "HDRP/Lit",
+          "hasMaterialId": true,
+          "materialId": 5.0,
+          "hasProfile": true,
+          "profileGuid": "4ce80190f8d308243a16d19290d0b45b",
+          "profileHash": 1076270218
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "job": "20260916-114004-51441afc",
+    "status": "CAPTURED",
+    "bundle_sha256": "163d50cd1481249592bd5eba9723fd1e9de4e23b537cccb0e7a8aea84e1d3f41",
+    "renderer_slots": 341,
+    "translucent_slots": [
+      {
+        "hierarchy": [
+          "root",
+          "tamadatrees",
+          "OBJ172"
+        ],
+        "renderer": "MeshRenderer",
+        "component": 0,
+        "slot": 0,
+        "material": {
+          "present": true,
+          "bundleFile": "BuildPlayer-tamada0.sharedAssets",
+          "pathId": "236",
+          "name": "Tree_lime_3_foliage",
+          "shader": "HDRP/Lit",
+          "hasMaterialId": true,
+          "materialId": 5.0,
+          "hasProfile": true,
+          "profileGuid": "4ce80190f8d308243a16d19290d0b45b",
+          "profileHash": 1076270218
+        }
+      },
+      {
+        "hierarchy": [
+          "root",
+          "tamadatrees",
+          "OBJ145"
+        ],
+        "renderer": "MeshRenderer",
+        "component": 0,
+        "slot": 0,
+        "material": {
+          "present": true,
+          "bundleFile": "BuildPlayer-tamada0.sharedAssets",
+          "pathId": "238",
+          "name": "Wood_Board_Cork_foliage",
+          "shader": "HDRP/Lit",
+          "hasMaterialId": true,
+          "materialId": 5.0,
+          "hasProfile": true,
+          "profileGuid": "4ce80190f8d308243a16d19290d0b45b",
+          "profileHash": 1076270218
+        }
+      },
+      {
+        "hierarchy": [
+          "root",
+          "tamadatrees",
+          "OBJ146"
+        ],
+        "renderer": "MeshRenderer",
+        "component": 0,
+        "slot": 0,
+        "material": {
+          "present": true,
+          "bundleFile": "BuildPlayer-tamada0.sharedAssets",
+          "pathId": "235",
+          "name": "OTPT_03_foliage",
+          "shader": "HDRP/Lit",
+          "hasMaterialId": true,
+          "materialId": 5.0,
+          "hasProfile": true,
+          "profileGuid": "4ce80190f8d308243a16d19290d0b45b",
+          "profileHash": 1076270218
+        }
+      },
+      {
+        "hierarchy": [
+          "root",
+          "tamadatrees",
+          "OBJ183"
+        ],
+        "renderer": "MeshRenderer",
+        "component": 0,
+        "slot": 0,
+        "material": {
+          "present": true,
+          "bundleFile": "BuildPlayer-tamada0.sharedAssets",
+          "pathId": "237",
+          "name": "WinterTrees_foliage",
+          "shader": "HDRP/Lit",
+          "hasMaterialId": true,
+          "materialId": 5.0,
+          "hasProfile": true,
+          "profileGuid": "4ce80190f8d308243a16d19290d0b45b",
+          "profileHash": 1076270218
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "job": "20260916-114528-335c8444",
+    "status": "CAPTURED",
+    "bundle_sha256": "6e7a47c9529dacfaf57972dc83f957d4a98624a805a6fa78a4156650df3b226c",
+    "renderer_slots": 341,
+    "translucent_slots": [
+      {
+        "hierarchy": [
+          "root",
+          "tamadatrees",
+          "OBJ172"
+        ],
+        "renderer": "MeshRenderer",
+        "component": 0,
+        "slot": 0,
+        "material": {
+          "present": true,
+          "bundleFile": "BuildPlayer-tamada0.sharedAssets",
+          "pathId": "236",
+          "name": "Tree_lime_3_foliage",
+          "shader": "HDRP/Lit",
+          "hasMaterialId": true,
+          "materialId": 5.0,
+          "hasProfile": true,
+          "profileGuid": "4ce80190f8d308243a16d19290d0b45b",
+          "profileHash": 1076270218
+        }
+      },
+      {
+        "hierarchy": [
+          "root",
+          "tamadatrees",
+          "OBJ146"
+        ],
+        "renderer": "MeshRenderer",
+        "component": 0,
+        "slot": 0,
+        "material": {
+          "present": true,
+          "bundleFile": "BuildPlayer-tamada0.sharedAssets",
+          "pathId": "235",
+          "name": "OTPT_03_foliage",
+          "shader": "HDRP/Lit",
+          "hasMaterialId": true,
+          "materialId": 5.0,
+          "hasProfile": true,
+          "profileGuid": "4ce80190f8d308243a16d19290d0b45b",
+          "profileHash": 1076270218
+        }
+      },
+      {
+        "hierarchy": [
+          "root",
+          "tamadatrees",
+          "OBJ145"
+        ],
+        "renderer": "MeshRenderer",
+        "component": 0,
+        "slot": 0,
+        "material": {
+          "present": true,
+          "bundleFile": "BuildPlayer-tamada0.sharedAssets",
+          "pathId": "238",
+          "name": "Wood_Board_Cork_foliage",
+          "shader": "HDRP/Lit",
+          "hasMaterialId": true,
+          "materialId": 5.0,
+          "hasProfile": true,
+          "profileGuid": "4ce80190f8d308243a16d19290d0b45b",
+          "profileHash": 1076270218
+        }
+      },
+      {
+        "hierarchy": [
+          "root",
+          "tamadatrees",
+          "OBJ183"
+        ],
+        "renderer": "MeshRenderer",
+        "component": 0,
+        "slot": 0,
+        "material": {
+          "present": true,
+          "bundleFile": "BuildPlayer-tamada0.sharedAssets",
+          "pathId": "237",
+          "name": "WinterTrees_foliage",
+          "shader": "HDRP/Lit",
+          "hasMaterialId": true,
+          "materialId": 5.0,
+          "hasProfile": true,
+          "profileGuid": "4ce80190f8d308243a16d19290d0b45b",
+          "profileHash": 1076270218
+        }
+      }
+    ],
+    "errors": []
+  },
+  {
+    "job": "20260916-152232-cb774e13",
+    "status": "CAPTURED",
+    "bundle_sha256": "00ec503a86b35be20766083308b925d4457c4ab427b8975751bf492f640e847c",
+    "renderer_slots": 341,
+    "translucent_slots": [
+      {
+        "hierarchy": [
+          "root",
+          "tamadatrees",
+          "OBJ172"
+        ],
+        "renderer": "MeshRenderer",
+        "component": 0,
+        "slot": 0,
+        "material": {
+          "present": true,
+          "bundleFile": "BuildPlayer-tamada0.sharedAssets",
+          "pathId": "234",
+          "name": "Tree lime 3",
+          "shader": "HDRP/Lit",
+          "hasMaterialId": true,
+          "materialId": 5.0,
+          "hasProfile": true,
+          "profileGuid": "4ce80190f8d308243a16d19290d0b45b",
+          "profileHash": 1076270218
+        }
+      },
+      {
+        "hierarchy": [
+          "root",
+          "tamadatrees",
+          "OBJ146"
+        ],
+        "renderer": "MeshRenderer",
+        "component": 0,
+        "slot": 0,
+        "material": {
+          "present": true,
+          "bundleFile": "BuildPlayer-tamada0.sharedAssets",
+          "pathId": "232",
+          "name": "OTPT_03",
+          "shader": "HDRP/Lit",
+          "hasMaterialId": true,
+          "materialId": 5.0,
+          "hasProfile": true,
+          "profileGuid": "4ce80190f8d308243a16d19290d0b45b",
+          "profileHash": 1076270218
+        }
+      },
+      {
+        "hierarchy": [
+          "root",
+          "tamadatrees",
+          "OBJ145"
+        ],
+        "renderer": "MeshRenderer",
+        "component": 0,
+        "slot": 0,
+        "material": {
+          "present": true,
+          "bundleFile": "BuildPlayer-tamada0.sharedAssets",
+          "pathId": "110",
+          "name": "Wood_Board_Cork",
+          "shader": "HDRP/Lit",
+          "hasMaterialId": true,
+          "materialId": 5.0,
+          "hasProfile": true,
+          "profileGuid": "4ce80190f8d308243a16d19290d0b45b",
+          "profileHash": 1076270218
+        }
+      },
+      {
+        "hierarchy": [
+          "root",
+          "tamadatrees",
+          "OBJ183"
+        ],
+        "renderer": "MeshRenderer",
+        "component": 0,
+        "slot": 0,
+        "material": {
+          "present": true,
+          "bundleFile": "BuildPlayer-tamada0.sharedAssets",
+          "pathId": "108",
+          "name": "WinterTrees",
+          "shader": "HDRP/Lit",
+          "hasMaterialId": true,
+          "materialId": 5.0,
+          "hasProfile": true,
+          "profileGuid": "4ce80190f8d308243a16d19290d0b45b",
+          "profileHash": 1076270218
+        }
+      }
+    ],
+    "errors": []
+  }
+]

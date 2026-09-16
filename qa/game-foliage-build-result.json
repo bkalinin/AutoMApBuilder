@@ -1,0 +1,83 @@
+{
+  "run_id": "20260916-172753-fdac46da",
+  "status": "PASS",
+  "started": "2026-09-16T14:27:53.964959+00:00",
+  "output_date": "2026-09-16",
+  "inputs": {
+    "package": "C:/Users/user/Documents/DRO File/Maps/TomatoSportsland.unitypackage",
+    "scene": "",
+    "meta_asset": "",
+    "overrides_enabled": true,
+    "meta": "",
+    "preview": "C:/Users/user/Downloads/Maps/Tomato/02521733-d8e2-4df2-92ae-49d88a748493_optimized_1000.png",
+    "icon": "C:/Users/user/Downloads/Maps/Tomato/02521733-d8e2-4df2-92ae-49d88a748493_optimized_1000.png",
+    "last_directory": "",
+    "platforms": [
+      "steam"
+    ],
+    "notifications": true,
+    "ignore_warnings": true,
+    "last_run": "C:\\Users\\user\\AppData\\Local\\CarXMapCombiner\\runs\\20260916-152229-ae49dac2"
+  },
+  "platforms": [
+    "steam"
+  ],
+  "jobs": [
+    {
+      "job_id": "20260916-172757-738d9395",
+      "status": "PASS",
+      "archive": "C:\\Users\\user\\Documents\\AutoBuildMap\\2026-09-16\\tamada_Steam_v4.zip",
+      "archive_sha256": "b15427abe240f86e6325f2857bcc1a61858849c92d9de0cfb1df74ae077cdc08",
+      "cleanup_verified": true,
+      "log_directory": "C:\\Users\\user\\Documents\\AutoBuildMap\\2026-09-16\\Log\\tamada\\20260916-172757-738d9395",
+      "material_trace": {
+        "status": "MATCH",
+        "counts": {
+          "MATCH": 341
+        },
+        "changed_slots": 4,
+        "elapsed_seconds": 3.938
+      },
+      "step": "steam",
+      "job_directory": "C:\\Users\\user\\AppData\\Local\\CarXMapCombiner\\jobs\\20260916-172757-738d9395",
+      "candidates": [],
+      "materials": {
+        "status": "PASS",
+        "materialsSeen": 236,
+        "treeMaterials": 4,
+        "foliageMaterials": 4,
+        "materialsEditedInPlace": 4,
+        "materialCopies": 0,
+        "volumeCopies": 1
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "at": "2026-09-16T14:27:55.021266+00:00",
+      "reason": "Пользователь выбрал «Собрать»: CameraTest не запускался"
+    }
+  ],
+  "current_job": null,
+  "current_step": "steam",
+  "runtime_llm_calls": 0,
+  "runtime_api_tokens": 0,
+  "report_path": "C:\\Users\\user\\Documents\\AutoBuildMap\\2026-09-16\\Log\\Runs\\20260916-172753-fdac46da\\report.html",
+  "fingerprint": {
+    "package": {
+      "path": "C:\\Users\\user\\Documents\\DRO File\\Maps\\TomatoSportsland.unitypackage",
+      "sha256": "284af675b808e234a2148deb7db51d1266d633577384e601a188abe94b4ff37c"
+    },
+    "preview": {
+      "path": "C:\\Users\\user\\Downloads\\Maps\\Tomato\\02521733-d8e2-4df2-92ae-49d88a748493_optimized_1000.png",
+      "sha256": "f779205e1ed601f3b9caed9b6bac3e25c773a9151aff6cbd0257cf111e7c4e23"
+    },
+    "icon": {
+      "path": "C:\\Users\\user\\Downloads\\Maps\\Tomato\\02521733-d8e2-4df2-92ae-49d88a748493_optimized_1000.png",
+      "sha256": "f779205e1ed601f3b9caed9b6bac3e25c773a9151aff6cbd0257cf111e7c4e23"
+    }
+  },
+  "build_only": true,
+  "message": "Сборка всех выбранных платформ завершена",
+  "finished": "2026-09-16T14:32:28.025187+00:00"
+}

@@ -117,12 +117,13 @@ namespace CarXMapCombiner
             EditorUtility.SetDirty(manager);
             AssetDatabase.SaveAssetIfDirty(manager);
             AutomationBridge.LogChange(AssetDatabase.GetAssetPath(manager), "targetScene", "", scenePath, "Prepare explicit build target");
+            if (request.operation == "build") MaterialTrace.Capture(scene, "imported");
             if (request.mapFixes != null)
             {
                 result.mapFixes = new MapFixReport();
                 try
                 {
-                    MapFixes.Apply(scene, request.mapFixes, result.mapFixes);
+                    MapFixes.Apply(scene, request.mapFixes, result.mapFixes, writableMaterialPaths: request.writableMaterialPaths);
                     if (BuildPlatform.Resolve(request.platform).IsPlayStation && request.reflectionProbeFix)
                         result.reflectionProbesPrepared = PlayStationPreparation.Apply(scene, result.mapFixes);
                 }
@@ -139,7 +140,7 @@ namespace CarXMapCombiner
                     var lines = new System.Collections.Generic.List<string> {
                         "Material/Foliage: " + result.mapFixes.status,
                         $"Materials: {result.mapFixes.materialsSeen}; tree: {result.mapFixes.treeMaterials}; foliage: {result.mapFixes.foliageMaterials}",
-                        $"Material copies: {result.mapFixes.materialCopies}; Volume Profile copies: {result.mapFixes.volumeCopies}",
+                        $"Materials edited in place: {result.mapFixes.materialsEditedInPlace}; Material copies: {result.mapFixes.materialCopies}; Volume Profile copies: {result.mapFixes.volumeCopies}",
                         "Foliage profile: " + result.mapFixes.foliageProfile
                     };
                     lines.AddRange(result.mapFixes.warnings.Select(w => $"WARNING: {w.asset} | {w.context} | {w.issue}"));
@@ -148,6 +149,7 @@ namespace CarXMapCombiner
                 }
             }
             EditorSceneManager.SaveScene(scene);
+            if (request.operation == "build") MaterialTrace.Capture(scene, "prepared");
         }
 
         static string Choose(string[] candidates, string selected, string label)

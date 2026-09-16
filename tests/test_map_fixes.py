@@ -11,8 +11,8 @@ from mapcombiner import unity_worker
 class MapFixTests(unittest.TestCase):
     def test_explicit_user_profile_and_independent_toggles(self):
         defaults = MapFixConfig.load()
-        self.assertEqual(defaults.foliage_profile_path, "Assets/MapResources/Graph/Foliage.asset")
-        self.assertEqual(defaults.foliage_profile_guid, "4ce80190f8d308243a16d19290d0b45b")
+        self.assertEqual(defaults.foliage_profile_path, "Assets/MapResources/TestMap/Graph/Foliage.asset")
+        self.assertEqual(defaults.foliage_profile_guid, "66567e56d8808594999fbe41b68d83d1")
         self.assertFalse(defaults.disable_fog)
         configured = MapFixConfig.load({"disable_fog": True, "auto_fix_foliage_shader": False})
         self.assertTrue(configured.request()["disable_fog"])

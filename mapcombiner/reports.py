@@ -21,7 +21,7 @@ def render_run(run):
     jobs = ''.join('<tr>' + ''.join(f'<td>{value}</td>' for value in (
         e(LABELS.get(job['step'], job['step'])), e(job['status']),
         'Да' if job.get('cleanup_verified') else 'Нет', link(job.get('archive'), 'ZIP'),
-        link(str(Path(job['log_directory']) / 'job-manifest.json'), 'Manifest') if job.get('log_directory') else '—')) + '</tr>'
+        (link(str(Path(job['log_directory']) / 'job-manifest.json'), 'Manifest') + ('<br>' + link(str(Path(job['log_directory']) / 'material-trace.txt'), 'Материалы: ' + job['material_trace']['status']) if job.get('material_trace') else '')) if job.get('log_directory') else '—')) + '</tr>'
         for job in run.get('jobs', []))
     decisions = ''.join(f'<li>{e(row["at"])} — {e(row["reason"])}</li>' for row in run.get('decisions', []))
     return f'''<!doctype html><html lang="ru"><meta charset="utf-8"><title>MapCombiner — {e(run['run_id'])}</title>
@@ -29,7 +29,7 @@ def render_run(run):
 <h1>MapCombiner</h1><span class="status">{e(run['status'])}</span>
 <p>{e(run.get('message', ''))}</p><p class="note">Задание: {e(run['run_id'])}<br>Начало: {e(run.get('started'))}<br>Завершено: {e(run.get('finished'))}</p>
 <p>Карта: <code>{e(run.get('inputs', {}).get('package'))}</code></p>
-<h2>Проверка карты</h2><table><tr><th>Метрика</th><th>Максимум</th><th>Лимит</th><th>Точек с превышением</th></tr>{metrics}</table>
+<h2>Проверка карты</h2><p>{'CameraTest в этом задании не запускался.' if run.get('build_only') else ''} {'Показан предыдущий замер: ' + e(run['validation_source']) if run.get('validation_source') else ''}</p><table><tr><th>Метрика</th><th>Максимум</th><th>Лимит</th><th>Точек с превышением</th></tr>{metrics}</table>
 <p>Проверено направлений: {e(stats.get('testedPoints'))}; точек на земле: {e(stats.get('groundPositions'))}; превышений: {e(stats.get('violationPoints'))}.</p>
 <h2>Результаты этапов</h2><table><tr><th>Этап</th><th>Результат</th><th>Cleanup проверен</th><th>Архив</th><th>Отчёт</th></tr>{jobs}</table>
 <h2>Решения</h2><ul>{decisions or '<li>Без дополнительных решений</li>'}</ul>
