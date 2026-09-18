@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 import os
-import shutil
+import subprocess
 import zipfile
 from .contracts import PipelineError, sha256
 
@@ -20,6 +20,9 @@ def archive(directory, scene, output_root, platform="Steam"):
     if platform not in {"Steam", "PS", "Xbox"}:
         raise ValueError("Unsupported archive platform")
     paths = verify_bundles(directory, scene)
+    archiver = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "tar.exe"
+    if not archiver.is_file():
+        raise PipelineError("Windows ZIP archiver (tar.exe) is unavailable: " + str(archiver), "FAILED")
     dated = Path(output_root) / datetime.now().strftime("%Y-%m-%d")
     dated.mkdir(parents=True, exist_ok=True)
     version = 1
@@ -34,9 +37,18 @@ def archive(directory, scene, output_root, platform="Steam"):
             version += 1
     try:
         with stream:
-            with zipfile.ZipFile(stream, "w", compression=zipfile.ZIP_STORED, allowZip64=True) as output:
-                for path in paths:
-                    output.write(path, path.name)
+            # Windows libarchive writes DEFLATE with data descriptors, matching
+            # the ZIP layout observed in Explorer-created user archives.
+            result = subprocess.run([
+                str(archiver), "--format", "zip",
+                "--options", "zip:compression=deflate,zip:compression-level=6",
+                "-cf", str(destination.resolve()), "-C", str(Path(directory).resolve()),
+                "--", *(path.name for path in paths),
+            ], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            if result.returncode != 0:
+                message = result.stderr.decode(errors="replace").strip()
+                raise PipelineError(f"Windows ZIP packaging failed ({result.returncode}): {message[-4000:]}", "FAILED")
             stream.flush()
             os.fsync(stream.fileno())
         verify_archive(destination, {path.name: sha256(path) for path in paths})

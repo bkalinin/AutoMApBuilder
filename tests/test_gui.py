@@ -203,6 +203,56 @@ class GuiTests(unittest.TestCase):
         self.assertEqual(panel.zip_overrides(), {})
         self.assertEqual(panel.zip_fields['steam'].path.toPlainText(), '')
 
+    def test_gallery_without_token_and_invalidation_on_zip_change(self):
+        panel = self.window.modio
+        first = self.root / 'one.zip'
+        second = self.root / 'two.zip'
+        first.write_bytes(b'one')
+        second.write_bytes(b'two')
+        panel.zip_fields['steam'].set_override(str(first))
+        self.assertIsNone(panel.target)
+        self.assertTrue(panel.gallery_button.isEnabled())
+        self.assertFalse(panel.upload_button.isEnabled())
+        with patch.object(panel, 'gallery') as gallery:
+            panel.gallery_button.click()
+        gallery.assert_called_once_with(self.window.settings['config']['state_root'])
+        panel.gallery_selection = panel.selection_signature()
+        panel.gallery_done({'path': str(self.root / 'index.html'), 'textures': 12, 'issues': 0, 'unsupported': 2})
+        panel.update_available()
+        self.assertTrue(panel.open_gallery_button.isEnabled())
+        panel.zip_fields['steam'].set_override(str(second))
+        self.assertFalse(panel.open_gallery_button.isEnabled())
+        panel.gallery_selection = panel.selection_signature()
+        panel.gallery_done({'path': str(self.root / 'index.html'), 'textures': 12, 'issues': 0, 'unsupported': 2})
+        second.write_bytes(b'new bytes')
+        panel.update_available()
+        self.assertFalse(panel.open_gallery_button.isEnabled())
+
+    def test_gallery_worker_preserves_upload_result_and_uses_selected_rows(self):
+        import time
+        panel = self.window.modio
+        selected = self.root / 'selected.zip'
+        selected.touch()
+        panel.zip_fields['xbox'].set_override(str(selected))
+        panel.results.setText('Steam Uploaded #123')
+        panel.state.setText('Upload: UPLOADED')
+        report = {'path': str(self.root / 'index.html'), 'textures': 3, 'issues': 0, 'unsupported': 1}
+        with patch('mapcombiner.upload_ui.build_gallery', return_value=report) as build:
+            panel.gallery_button.click()
+            self.assertFalse(self.window.build_button.isEnabled())
+            until = time.monotonic() + 3
+            while panel.busy and time.monotonic() < until:
+                self.app.processEvents()
+                time.sleep(.005)
+        self.assertFalse(panel.busy)
+        rows = build.call_args.args[0]
+        self.assertEqual([(r['step'], r['archive'], r['source']) for r in rows], [('xbox', str(selected), 'manual')])
+        self.assertEqual(panel.results.text(), 'Steam Uploaded #123')
+        self.assertEqual(panel.state.text(), 'Upload: UPLOADED')
+        self.assertTrue(panel.open_gallery_button.isEnabled())
+        self.window.package.setText(str(self.root / 'new.unitypackage'))
+        self.assertFalse(panel.open_gallery_button.isEnabled())
+
     def test_modio_manual_upload_without_build_and_auto_snapshot(self):
         panel = self.window.modio
         target = {'game_id': 5892, 'mod_id': 6214018, 'name': 'Tomato Sportsland'}

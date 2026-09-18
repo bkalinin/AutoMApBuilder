@@ -10,7 +10,8 @@ from PySide6.QtWidgets import (QCheckBox, QFileDialog, QFormLayout, QHBoxLayout,
 
 from .credentials import TokenStore
 from .modio_client import Client, Cancelled, positive_id
-from .uploads import upload_run
+from .uploads import upload_run, selected_artifacts
+from .texture_gallery import build_gallery, file_stamp
 
 LABELS = {'steam': 'Steam', 'playstation': 'PlayStation', 'xbox': 'Xbox'}
 STATUSES = {'CHECKING': 'Проверка ZIP', 'UPLOADING': 'Загрузка', 'CREATING': 'Создание Modfile',
@@ -103,6 +104,7 @@ class ZipField(QWidget):
 class UploadPanel(QWidget):
     busyChanged = Signal(bool)
     uploadRequested = Signal()
+    galleryRequested = Signal()
     reportRequested = Signal(str)
 
     def __init__(self, settings_path, parent=None):
@@ -114,6 +116,9 @@ class UploadPanel(QWidget):
         self.report_path = ''
         self.can_upload = True
         self.artifacts = []
+        self.task_kind = ''
+        self.gallery_path = ''
+        self.gallery_selection = None
         layout = QVBoxLayout(self)
         form = QFormLayout()
         self.game_id = QLineEdit()
@@ -148,6 +153,17 @@ class UploadPanel(QWidget):
             field = ZipField(platform, self)
             self.zip_fields[platform] = field
             layout.addWidget(field)
+        gallery_row = QHBoxLayout()
+        self.gallery_button = QPushButton('Создать галерею текстур')
+        self.open_gallery_button = QPushButton('Открыть галерею')
+        self.open_gallery_button.setEnabled(False)
+        gallery_row.addWidget(self.gallery_button)
+        gallery_row.addWidget(self.open_gallery_button)
+        layout.addLayout(gallery_row)
+        self.gallery_state = QLabel('Галерея выбранных ZIP для ручного просмотра. Unity и токен не нужны.')
+        self.gallery_state.setTextFormat(Qt.TextFormat.PlainText)
+        self.gallery_state.setWordWrap(True)
+        layout.addWidget(self.gallery_state)
         self.upload_button = QPushButton('Upload to mod.io / Отправить')
         self.upload_button.setEnabled(False)
         layout.addWidget(self.upload_button)
@@ -181,6 +197,8 @@ class UploadPanel(QWidget):
         self.delete_token_button.clicked.connect(self.delete_token)
         self.lookup_button.clicked.connect(self.lookup)
         self.upload_button.clicked.connect(self.uploadRequested.emit)
+        self.gallery_button.clicked.connect(self.galleryRequested.emit)
+        self.open_gallery_button.clicked.connect(lambda: self.reportRequested.emit(self.gallery_path))
         for field in self.zip_fields.values():
             field.changed.connect(self.update_available)
         self.refresh_token_status()
@@ -238,6 +256,9 @@ class UploadPanel(QWidget):
         self.report_button.setEnabled(False)
         self.results.setText('Steam —\nPlayStation —\nXbox —')
         self.state.setText('Upload: —')
+        self.gallery_path = ''
+        self.gallery_selection = None
+        self.gallery_state.setText('Галерея выбранных ZIP для ручного просмотра. Unity и токен не нужны.')
         self.set_overrides({})
         self.show_artifacts([])
         self.invalidate_target()
@@ -247,6 +268,7 @@ class UploadPanel(QWidget):
         paths = {row['step']: str(Path(row['archive'])) for row in rows}
         for key, field in self.zip_fields.items():
             field.set_automatic(paths.get(key, ''))
+        self.update_available()
 
     def zip_overrides(self):
         return {key: field.manual_path for key, field in self.zip_fields.items() if field.manual.isChecked()}
@@ -260,6 +282,43 @@ class UploadPanel(QWidget):
             self.can_upload = can_upload
         has_files = bool(self.artifacts or any(self.zip_overrides().values()))
         self.upload_button.setEnabled(self.can_upload and has_files and self.target is not None and not self.busy)
+        self.gallery_button.setEnabled(self.can_upload and has_files and not self.busy)
+        if self.gallery_path and self.selection_signature() != self.gallery_selection:
+            self.gallery_path = ''
+            self.gallery_state.setText('ZIP изменены. Создайте галерею для нового набора файлов.')
+        self.open_gallery_button.setEnabled(bool(self.gallery_path) and self.can_upload and not self.busy)
+
+    def selection_signature(self):
+        try:
+            rows = selected_artifacts({'jobs': self.artifacts}, self.zip_overrides())
+            return tuple((row['step'], str(Path(row['archive']).absolute()),
+                          row.get('archive_sha256'), file_stamp(row['archive'])) for row in rows)
+        except (ValueError, OSError):
+            return None
+
+    def gallery(self, state_root):
+        if self.busy:
+            return
+        try:
+            rows = selected_artifacts({'jobs': self.artifacts}, self.zip_overrides())
+            self.gallery_path = ''
+            self.gallery_selection = self.selection_signature()
+            self._launch(lambda task: build_gallery(rows, state_root,
+                cancelled=self.stop.is_set, progress=task.progress.emit), 'gallery')
+        except Exception as error:
+            self.show_gallery_error(str(error))
+
+    def gallery_done(self, report):
+        if self.selection_signature() != self.gallery_selection:
+            self.show_gallery_error('ZIP изменены. Создайте галерею заново.')
+            return
+        self.gallery_path = report['path']
+        self.gallery_state.setText(f'Галерея готова: {report["textures"]} изображений. '
+            f'Не показано ресурсов: {report["unsupported"]}; ошибок чтения: {report["issues"]}. '
+            'Подробности — в галерее.')
+
+    def show_gallery_error(self, message):
+        self.gallery_state.setText('Галерея: ' + message)
 
     def checked_target(self):
         if not self.target or (self.target['game_id'], self.target['mod_id']) != (
@@ -276,12 +335,17 @@ class UploadPanel(QWidget):
         self.stop.clear()
         task = Task(operation, self)
         self.worker = task
-        task.progress.connect(self.state.setText)
+        self.task_kind = kind
+        task.progress.connect(self.gallery_state.setText if kind == 'gallery' else self.state.setText)
         task.snapshot.connect(self.show_report)
-        task.error.connect(self.show_error)
-        task.result.connect(self.lookup_done if kind == 'lookup' else self.show_report)
+        task.error.connect(self.show_gallery_error if kind == 'gallery' else self.show_error)
+        task.result.connect(self.gallery_done if kind == 'gallery' else self.lookup_done if kind == 'lookup' else self.show_report)
         task.finished.connect(self.task_finished)
-        self.state.setText('Проверка mod.io…' if kind == 'lookup' else 'Подготовка загрузки…')
+        if kind == 'gallery':
+            self.gallery_state.setText('Подготовка галереи…')
+        else:
+            self.state.setText('Проверка mod.io…' if kind == 'lookup' else 'Подготовка загрузки…')
+        self.update_available()
         self.busyChanged.emit(True)
         task.start()
 
@@ -341,4 +405,7 @@ class UploadPanel(QWidget):
 
     def cancel(self):
         self.stop.set()
-        self.state.setText('Остановка загрузки… Ожидаем завершения текущего сетевого запроса.')
+        if self.task_kind == 'gallery':
+            self.gallery_state.setText('Остановка галереи… Ожидаем завершения чтения текущего ресурса.')
+        else:
+            self.state.setText('Остановка загрузки… Ожидаем завершения текущего сетевого запроса.')

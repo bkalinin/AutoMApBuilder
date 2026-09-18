@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
@@ -90,6 +91,7 @@ namespace CarXMapCombiner
                 throw new JobException("Both Preview and Preview Mini are required; supply overrides");
             PrepareTexture(preview, 10L * 1024 * 1024, "Preview");
             PrepareTexture(icon, 1024 * 1024, "Preview Mini");
+            PrepareMinimapTextures(scene);
             preview = AssetDatabase.LoadAssetAtPath<Texture2D>(AssetDatabase.GetAssetPath(preview));
             icon = AssetDatabase.LoadAssetAtPath<Texture2D>(AssetDatabase.GetAssetPath(icon));
             AutomationBridge.LogChange(result.metaPath, "mapMetaConfigValue.largeIcon",
@@ -176,6 +178,37 @@ namespace CarXMapCombiner
             string path = AssetDatabase.GetAssetPath(texture);
             if (string.IsNullOrEmpty(path) || !File.Exists(path)) throw new JobException(label + " must be a file asset");
             if (new FileInfo(path).Length > limit) throw new JobException(label + " exceeds file size limit: " + path);
+            PrepareTextureImport(path, label);
+        }
+        static void PrepareMinimapTextures(Scene scene)
+        {
+            // Use actual Minimap references, including inactive objects and every layer.
+            // Collect paths before reimporting so Unity object reloads cannot invalidate the scan.
+            var paths = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var root in scene.GetRootGameObjects())
+                foreach (var minimap in root.GetComponentsInChildren<Minimap>(true))
+                    using (var serialized = new SerializedObject(minimap))
+                    {
+                        var layers = serialized.FindProperty("m_textures");
+                        if (layers == null || !layers.isArray)
+                            throw new JobException("Minimap texture fields are unavailable");
+                        for (int index = 0; index < layers.arraySize; index++)
+                            foreach (string field in new[] { "mainTexture", "alphaTexture" })
+                            {
+                                var texture = layers.GetArrayElementAtIndex(index).FindPropertyRelative(field)
+                                    ?.objectReferenceValue as Texture2D;
+                                if (texture == null) continue;
+                                string path = AssetDatabase.GetAssetPath(texture);
+                                // Generated/native textures have no TextureImporter checkbox.
+                                if (!string.IsNullOrEmpty(path) && AssetImporter.GetAtPath(path) is TextureImporter)
+                                    paths.Add(path);
+                            }
+                    }
+            foreach (string path in paths.OrderBy(p => p, StringComparer.Ordinal))
+                PrepareTextureImport(path, "Minimap");
+        }
+        static void PrepareTextureImport(string path, string label)
+        {
             var importer = AssetImporter.GetAtPath(path) as TextureImporter;
             if (importer == null) throw new JobException(label + " has no TextureImporter");
             if (!importer.isReadable || importer.mipmapEnabled)
@@ -186,6 +219,9 @@ namespace CarXMapCombiner
                 importer.mipmapEnabled = false;
                 importer.SaveAndReimport();
             }
+            importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null || !importer.isReadable || importer.mipmapEnabled)
+                throw new JobException(label + " import settings were not saved: " + path);
         }
         public static void EnsureGeneratedFolder()
         {

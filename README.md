@@ -41,6 +41,12 @@
 При включённой замене дополнительных файлов оба изображения Preview / Preview Mini обязательны:
 пустой путь или отсутствующий файл останавливают задание до запуска Unity. MapMetaConfig необязателен.
 
+Для Preview, Preview Mini и текстур всех слоёв Minimap перед проверкой/сборкой
+отключается Generate Mipmaps и включается Read/Write с сохранением и повторным импортом.
+Миникарта определяется по ссылкам `Minimap.m_textures` (mainTexture и alphaTexture),
+включая неактивные объекты. Правило применяется на Steam, PlayStation и Xbox.
+Настройки сжатия и разрешения самих текстур при этом не меняются.
+
 Foliage fix проверяет каждый слот Renderer, включая Combined Mesh и неактивные LOD.
 HDRP/Lit + Translucent + отсутствующий профиль распознаётся независимо от имени.
 Назначается явно настроенный Foliage; проверяются GUID-ссылка и shader hash профиля.
@@ -113,7 +119,7 @@ Success requires both Unity manifests, nonempty valid AssetBundles, one expected
 scene, a loadable MapManagerConfig with correct platform/compression/previews,
 verified External copies, and a verified ZIP with exactly SceneName.bundle and
 meta. Staged-baseline cleanup must also pass. ZIP filenames use the sanitized
-scene name and _v2, _v3 suffixes. ZIP entries use STORE; AssetBundles use
+scene name and _v2, _v3 suffixes. ZIP entries use DEFLATE level 6; AssetBundles use
 UncompressedAssetBundle plus StrictMode.
 
 Settings default to config.example.json values. JSON uses the standard library.
@@ -237,9 +243,14 @@ builds sequentially; a combined Validate & Build queue is a later milestone.
 | Xbox | 6000.0.65f1 | GameCoreXboxOne | XboxOne (1004) | _Xbox.zip |
 
 Every platform builds Map + Meta with No Compress / StrictMode, verifies both
-AssetBundles and External copies, creates a non-overwriting ZIP, then verifies
+AssetBundles and External copies, creates a non-overwriting ZIP (DEFLATE level 6), then verifies
 staged-baseline cleanup. Unity version and active build target must match the
 selected platform. Compiler/build API failures stop the job; warnings do not.
+
+ZIP packaging uses the built-in Windows `System32/tar.exe` (libarchive), with
+DEFLATE level 6 and data descriptors, matching the layout of the supplied
+Explorer-created ZIPs. Packaging fails clearly if this Windows tool is unavailable.
+Bundle contents are verified after packaging; Unity No Compress is unchanged.
 
 config.example.json retains steam_repo/unity_exe and adds playstation_repo,
 playstation_unity_exe, xbox_repo and xbox_unity_exe. Global map_fixes settings are
@@ -353,3 +364,28 @@ HTML открывается кнопкой **Отчёт загрузки**. Uplo
 Снимите «Свой ZIP», чтобы отправить новый результат этой платформы после сборки.
 Ручные переопределения действуют до смены карты или закрытия приложения. Проверенные
 успешные Modfile ID продолжают сохраняться в общем журнале и предотвращают дубликаты.
+
+## Галерея текстур для ручной проверки
+
+На вкладке **mod.io** выберите ZIP платформ (готовые сборки или **Свой ZIP**) и
+нажмите **Создать галерею текстур**, затем **Открыть галерею**. Mod ID и токен для
+этого не нужны. Галерея открывается в браузере и работает полностью локально,
+без Unity, сети и AI. Сборка и отправка продолжают работать независимо от просмотра.
+
+Галерея содержит найденные Texture2D из выбранных ZIP, включая Preview и текстуры
+без найденных связей с материалами. Есть поиск по имени текстуры, материалу и
+объекту, фильтры платформ/групп, просмотр полного разрешения и режим без прозрачности.
+Одинаковые пиксели объединяются с сохранением источников и связей Renderer/слотов,
+в том числе Combined Mesh. Классификация цвета/масок — подсказка, по умолчанию видны все группы.
+
+Файлы находятся в `state_root/galleries/<идентификатор>/`: `index.html`, `manifest.json`
+и папка `images` с PNG и миниатюрами. Для переноса копируйте всю папку галереи.
+Завершённая галерея переиспользуется при неизменных ZIP; после смены файлов кнопку
+просмотра нужно обновить через **Создать галерею текстур**. SHA-256 исходных ZIP
+сохранены в галерее. Незавершённый экспорт при отмене удаляется; готовые галереи остаются.
+
+Cubemap, массивы/объёмные текстуры, видео и ошибки чтения перечислены отдельно.
+Изображения больше 64 мегапикселей не декодируются и попадают в список ошибок.
+Это инструмент просмотра Texture2D, не автоматическая модерация и не воспроизведение
+карты: шейдеры, освещение и изображения/текст из геометрии нужно проверять в игре.
+Одобрение человека и обязательная остановка перед upload в эту версию не входят.

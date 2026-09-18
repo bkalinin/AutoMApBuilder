@@ -7,7 +7,7 @@ name = "carx-map-combiner"
 version = "0.1.0"
 description = "Local deterministic CarX map build orchestration"
 requires-python = ">=3.11"
-dependencies = ["UnityPy==1.25.3"]
+dependencies = ["UnityPy==1.25.3", "Pillow==12.3.0"]
 
 [project.optional-dependencies]
 gui = ["PySide6-Essentials==6.10.2"]
@@ -20,3 +20,6 @@ mapcombiner = "mapcombiner.__main__:main"
 
 [tool.setuptools.packages.find]
 include = ["mapcombiner*"]
+
+[tool.setuptools.package-data]
+mapcombiner = ["texture_gallery.html"]

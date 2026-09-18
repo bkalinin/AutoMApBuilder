@@ -172,6 +172,7 @@ class MainWindow(QMainWindow):
         self.modio_tab = self.tabs.addTab(modio_scroll, 'mod.io')
         self.modio.busyChanged.connect(self.upload_activity_changed)
         self.modio.uploadRequested.connect(self.start_upload)
+        self.modio.galleryRequested.connect(self.start_gallery)
         self.modio.reportRequested.connect(self.open_path)
         split.addWidget(self.tabs)
         panel = QWidget()
@@ -657,6 +658,11 @@ class MainWindow(QMainWindow):
             self.modio.upload(self.run_directory, self.settings['config']['state_root'])
         except Exception as error:
             self.modio.show_error(str(error))
+
+    def start_gallery(self):
+        if self.active_process() or self.modio.busy or (self.run_directory and is_running(self.run_directory)):
+            return
+        self.modio.gallery(self.settings['config']['state_root'])
 
     def poll(self):
         if not self.run_directory:

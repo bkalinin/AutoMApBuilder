@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' file:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>MapCombiner · Галерея текстур</title>
+<style>
+:root{color-scheme:dark;--bg:#10161e;--panel:#19232f;--border:#344454;--text:#edf3f7;--muted:#a9b9c9;--accent:#66e2d3}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 "Segoe UI",sans-serif}
+header,main{max-width:1550px;margin:auto;padding:28px 32px}header{padding-bottom:14px}.eyebrow{color:var(--accent);font-size:12px;letter-spacing:.16em;text-transform:uppercase}
+h1{font-size:32px;margin:8px 0 4px;line-height:1.2}p{margin:8px 0}.muted{color:var(--muted)}.stats{display:flex;gap:12px;flex-wrap:wrap;margin:22px 0}
+.stat{background:var(--panel);padding:12px 20px;border:1px solid var(--border);border-radius:10px}.stat strong{font-size:26px;margin-right:9px}.stat span{color:var(--muted)}
+details{border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin:12px 0}summary{cursor:pointer;font-weight:600}.source{padding:10px 0;border-bottom:1px solid var(--border);overflow-wrap:anywhere}.source:last-child{border:0}.hash{font:12px/1.5 monospace;color:var(--muted)}
+.notice{color:#ffd595;background:#2b251d;border-color:#5d4c31}.issue{padding:8px 0;border-bottom:1px solid #5d4c31;overflow-wrap:anywhere}.issue-list{max-height:320px;overflow:auto}
+.toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.toolbar input{flex:1;min-width:260px}.toolbar select{min-width:180px}input,select,button,a.button{font:inherit;border:1px solid var(--border);border-radius:7px;padding:9px 12px;background:var(--panel);color:var(--text)}
+button,a.button{cursor:pointer}button:hover,a.button:hover{border-color:var(--accent)}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}button:disabled{opacity:.4;cursor:default}a{color:var(--accent)}a.button{text-decoration:none;display:inline-block}
+.result-bar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:18px 0;color:var(--muted)}.pages{display:flex;gap:8px;align-items:center}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:16px}
+.card{text-align:left;padding:0;overflow:hidden;min-width:0}.preview{height:190px;display:flex;align-items:center;justify-content:center;overflow:hidden}.checker{background-color:#c6cbd0;background-image:conic-gradient(#9199a0 25%,transparent 0 50%,#9199a0 0 75%,transparent 0);background-size:20px 20px}.preview img{max-width:100%;max-height:100%;object-fit:contain}.card-text{padding:12px}.name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.small{font-size:12px;color:var(--muted)}.badge{display:inline-block;padding:2px 6px;background:#253748;border-radius:4px;margin:6px 5px 0 0;font-size:11px}
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}footer{margin-top:26px;color:var(--muted);font-size:13px}dialog{width:min(1500px,96vw);max-width:96vw;max-height:94vh;padding:0;border:1px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text)}dialog::backdrop{background:#05090dda}
+.viewer-head{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--border)}.viewer-head h2{font-size:19px;margin:0;overflow-wrap:anywhere}.viewer-tools{padding:10px 20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}.viewer-tools label{display:flex;gap:6px;align-items:center}
+.viewer-image{height:52vh;overflow:auto;text-align:center}.viewer-image img{vertical-align:middle;max-width:100%;max-height:100%;object-fit:contain}.viewer-image.actual{text-align:left}.viewer-image.actual img{max-width:none;max-height:none}.viewer-info{padding:12px 20px;max-height:23vh;overflow:auto}.binding{margin:8px 0;overflow-wrap:anywhere}.binding summary{font-weight:400}ul{padding-left:22px}.usage{font-size:13px;font-family:Consolas,monospace;overflow-wrap:anywhere}.light{background:#fafafa}.dark{background:#161616}
+@media(max-width:600px){header,main{padding:20px 14px}.result-bar{align-items:flex-start;flex-direction:column}.toolbar input{min-width:100%}.viewer-head{align-items:flex-start}h1{font-size:26px}}
+</style>
+</head>
+<body>
+<header>
+<div class="eyebrow">MapCombiner · Локальная проверка</div>
+<h1>Галерея текстур</h1>
+<p class="muted">Изображения из выбранных ZIP. Откройте карточку, чтобы рассмотреть детали и найти материал или объект.</p>
+<div class="stats" id="stats"></div>
+<details><summary>Исходные ZIP и границы проверки</summary><div id="sources"></div>
+<p class="muted">Показаны найденные Texture2D, в том числе Preview, атласы и текстуры без найденных связей с материалами. Совпадающие пиксели объединены; платформы и использования сохранены. Группы определены по полям материалов, это подсказка для просмотра.</p>
+<p class="muted">Связи объектов получены из Renderer и его слотов, включая Combined Mesh. Исходный путь Assets может не сохраниться в сборке. Текст, составленный из геометрии, видео, кубические и объёмные текстуры нужно проверять отдельно. Галерея не воспроизводит шейдеры и освещение игры и не заменяет осмотр карты.</p>
+<p class="muted">Это снимок указанных ZIP, а не отметка об одобрении. После замены сборки создайте галерею заново.</p></details>
+<details class="notice" id="issues-panel" hidden><summary id="issues-title"></summary><div class="issue-list" id="issues"></div></details>
+</header>
+<main>
+<div class="toolbar">
+<input id="search" type="search" placeholder="Поиск: текстура, материал, объект…" aria-label="Поиск по текстурам, материалам и объектам">
+<select id="platform" aria-label="Платформа"><option value="all">Все платформы</option></select>
+<select id="group" aria-label="Группа текстур"><option value="all">Все текстуры</option><option value="color">Цвет / эмиссия</option><option value="other">Другие / без связей</option><option value="technical">Маски / нормали</option></select>
+</div>
+<div class="result-bar"><span id="count"></span><div class="pages"><button id="prev" aria-label="Предыдущая страница">←</button><span id="page"></span><button id="next" aria-label="Следующая страница">→</button></div></div>
+<div id="grid" class="grid"></div><p id="empty" class="empty" hidden>Нет изображений для этих условий. Измените поиск или фильтры.</p>
+<footer>Работает без подключения к сети. Решение о допустимости содержимого принимает человек.</footer>
+</main>
+<dialog id="viewer" aria-labelledby="viewer-title">
+<div class="viewer-head"><div><h2 id="viewer-title"></h2><div id="viewer-size" class="small"></div></div><button id="close">Закрыть · Esc</button></div>
+<div class="viewer-tools"><button id="image-prev" aria-label="Предыдущее изображение">←</button><button id="image-next" aria-label="Следующее изображение">→</button>
+<button id="zoom">Масштаб 100%</button><select id="background" aria-label="Фон изображения"><option value="checker">Фон: клетка</option><option value="light">Фон: светлый</option><option value="dark">Фон: тёмный</option></select>
+<label><input type="checkbox" id="ignore-alpha">Без прозрачности</label><a id="full" class="button" target="_blank" rel="noopener">Открыть PNG</a></div>
+<div id="image-area" class="viewer-image checker"><img id="full-image" alt=""></div><div id="viewer-info" class="viewer-info"></div>
+</dialog>
+<script type="application/json" id="gallery-data">__GALLERY_DATA__</script>
+<script>
+'use strict';
+const data=JSON.parse(document.getElementById('gallery-data').textContent);
+const $=id=>document.getElementById(id);
+const labels={steam:'Steam',playstation:'PlayStation',xbox:'Xbox'};
+const groups={color:'Цвет / эмиссия',other:'Другие / без связей',technical:'Маски / нормали'};
+function element(tag,text,className){const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(className)el.className=className;return el;}
+function sourceLabel(index){return labels[data.sources[index].platform]||data.sources[index].platform;}
+for(const [value,label] of [[data.textures.length,'уникальных изображений'],[data.sources.length,'выбранных ZIP'],[data.issues.length+data.unsupported.length,'замечаний к извлечению']]){const el=element('div',undefined,'stat');el.append(element('strong',value),element('span',label));$('stats').append(el);}
+data.sources.forEach(source=>{const el=element('div',undefined,'source');el.append(element('strong',labels[source.platform]||source.platform),element('div',source.archive),element('div','SHA-256: '+source.sha256,'hash'),element('div','Texture2D в ZIP: '+(source.texture_count??'не определено'),'small'));$('sources').append(el);});
+for(const platform of new Set(data.sources.map(s=>s.platform))){const option=element('option',labels[platform]||platform);option.value=platform;$('platform').append(option);}
+if(data.issues.length||data.unsupported.length){$('issues-panel').hidden=false;$('issues-panel').open=true;$('issues-title').textContent='Не показано или не удалось прочитать: '+data.unsupported.length+' ресурсов, '+data.issues.length+' ошибок';
+ for(const issue of data.issues){$('issues').append(element('div',sourceLabel(issue.source)+' · '+issue.stage+' · '+(issue.name||issue.bundle_file||'')+' '+(issue.path_id||'')+' — '+issue.message,'issue'));}
+ for(const row of data.unsupported){$('issues').append(element('div',sourceLabel(row.source)+' · '+row.type+' · '+(row.name||'без имени')+' · '+row.bundle_file+' / '+row.path_id+' — этот тип не включён в 2D-галерею','issue'));}}
+const entries=data.textures.map(row=>{const names=[...new Set(row.occurrences.map(o=>o.name||'Без имени'))];const materialIds=[...new Set(row.occurrences.flatMap(o=>o.bindings.map(b=>b.material)))];const text=[...names,...materialIds.flatMap(id=>{const m=data.materials[id];return [m.name,...m.uses.map(u=>u.hierarchy.join('/'))];})].join('\n').toLocaleLowerCase();return {...row,names,materialIds,text,platforms:[...new Set(row.occurrences.map(o=>data.sources[o.source].platform))]};});
+let filtered=entries,page=0,active=0,actual=false;const pageSize=48;
+function render(){const start=page*pageSize;$('grid').replaceChildren();$('count').textContent='Показано '+filtered.length+' из '+entries.length+' изображений';$('page').textContent=(page+1)+' / '+Math.max(1,Math.ceil(filtered.length/pageSize));$('prev').disabled=page===0;$('next').disabled=start+pageSize>=filtered.length;$('empty').hidden=filtered.length>0;
+ filtered.slice(start,start+pageSize).forEach((row,index)=>{const card=element('button',undefined,'card');card.type='button';card.title=row.names.join(' / ');const preview=element('div',undefined,'preview checker');const img=element('img');img.src=row.thumbnail;img.alt=row.names[0];img.loading='lazy';preview.append(img);const text=element('div',undefined,'card-text');text.append(element('div',row.names[0],'name'),element('div',row.width+' × '+row.height+' · '+groups[row.group],'small'));for(const platform of row.platforms)text.append(element('span',labels[platform]||platform,'badge'));card.append(preview,text);card.addEventListener('click',()=>openImage(start+index));$('grid').append(card);});}
+function filter(){const query=$('search').value.trim().toLocaleLowerCase(),platform=$('platform').value,group=$('group').value;filtered=entries.filter(row=>(!query||row.text.includes(query))&&(platform==='all'||row.platforms.includes(platform))&&(group==='all'||row.group===group));page=0;render();}
+$('search').addEventListener('input',filter);$('platform').addEventListener('change',filter);$('group').addEventListener('change',filter);
+$('prev').addEventListener('click',()=>{page--;render();});$('next').addEventListener('click',()=>{page++;render();});
+function updateImage(){const row=filtered[active];const path=$('ignore-alpha').checked&&row.rgb_image?row.rgb_image:row.image;$('full-image').src=path;$('full-image').alt=row.names.join(' / ');$('full').href=path;$('image-area').className='viewer-image '+$('background').value+(actual?' actual':'');$('zoom').textContent=actual?'Вписать в окно':'Масштаб 100%';}
+function openImage(index){active=index;actual=false;const row=filtered[index];$('viewer-title').textContent=row.names.join(' / ');$('viewer-size').textContent=row.width+' × '+row.height+' · '+(index+1)+' из '+filtered.length;$('image-prev').disabled=index===0;$('image-next').disabled=index===filtered.length-1;$('ignore-alpha').disabled=!row.rgb_image;$('ignore-alpha').checked=false;$('viewer-info').replaceChildren();
+ for(const occurrence of row.occurrences){const section=element('details',undefined,'binding');section.open=true;section.append(element('summary',sourceLabel(occurrence.source)+' · '+(occurrence.name||'Без имени')),element('div',occurrence.bundle_file+' / '+occurrence.path_id+' · Texture format '+occurrence.format,'hash'));
+  if(!occurrence.bindings.length)section.append(element('p','Связь с материалами не найдена. Изображение оставлено в галерее.','muted'));
+  for(const binding of occurrence.bindings){const material=data.materials[binding.material],uses=element('details');uses.append(element('summary','Материал: '+material.name+' · '+binding.properties.join(', ')+' · объектов/слотов: '+material.uses.length));
+   if(!material.uses.length)uses.append(element('p','Renderer для этого материала не найден.','muted'));
+   const list=element('ul');for(const use of material.uses)list.append(element('li',use.hierarchy.join('/')+' · '+use.renderer+' #'+use.renderer_id+' · слот '+use.slot,'usage'));uses.append(list);section.append(uses);}
+  $('viewer-info').append(section);}
+ updateImage();if(!$('viewer').open)$('viewer').showModal();$('image-area').scrollTo(0,0);}
+$('close').addEventListener('click',()=>$('viewer').close());$('zoom').addEventListener('click',()=>{actual=!actual;updateImage();});$('background').addEventListener('change',updateImage);$('ignore-alpha').addEventListener('change',updateImage);
+$('image-prev').addEventListener('click',()=>openImage(active-1));$('image-next').addEventListener('click',()=>openImage(active+1));
+$('viewer').addEventListener('keydown',event=>{if(event.target.matches('input,select'))return;if(event.key==='ArrowLeft'&&active>0){event.preventDefault();openImage(active-1);}if(event.key==='ArrowRight'&&active<filtered.length-1){event.preventDefault();openImage(active+1);}});
+render();
+</script>
+</body>
+</html>
