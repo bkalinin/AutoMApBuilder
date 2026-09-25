@@ -11,9 +11,27 @@ import uuid
 
 from .credentials import normalize_token
 
-PLATFORMS = {'steam': 'windows', 'playstation': 'ps4', 'xbox': 'xboxone'}
+PLATFORMS = {'steam': ('windows',), 'playstation': ('ps4', 'ps5'),
+             'xbox': ('xboxone', 'xboxseriesx')}
+PLATFORM_NAMES = {'windows': 'Windows', 'ps4': 'PS4', 'ps5': 'PS5',
+                  'xboxone': 'Xbox One', 'xboxseriesx': 'Xbox Series X|S'}
 MULTIPART_THRESHOLD = 100_000_000
 PART_SIZE = 50 * 1024 * 1024
+
+
+def target_platforms(entry):
+    # Preserve the intent of old in-flight requests when reading the v1 journal.
+    if 'target_platforms' in entry:
+        return tuple(entry['target_platforms'])
+    return (entry['target_platform'],) if entry.get('target_platform') else ()
+
+
+def platform_names(platforms):
+    return ' + '.join(PLATFORM_NAMES.get(p, p) for p in platforms) or '—'
+
+
+def file_platforms(result):
+    return list(dict.fromkeys(p['platform'] for p in result.get('platforms', []) if p.get('platform')))
 
 
 class Cancelled(Exception):
@@ -136,13 +154,22 @@ class Client:
 
     def reconcile(self, mod_id, entry):
         matches = []
+        expected = set(target_platforms(entry))
         for row in self.rows(self.base(mod_id) + '/files', {'_sort': '-date_added'}):
-            if (row.get('filename') == entry['filename']
-                    and row.get('filehash', {}).get('md5', '').lower() == entry['md5']
+            # mod.io rewrites ZIP names; match content and destination instead.
+            if (row.get('mod_id') == int(mod_id)
+                    and row.get('filehash', {}).get('md5', '').lower() == entry['md5'].lower()
+                    and ('filesize' not in entry or row.get('filesize') == entry['filesize'])
                     and int(row.get('date_added', 0)) >= entry['create_started'] - 300
-                    and any(p.get('platform') == entry['target_platform'] for p in row.get('platforms', []))):
+                    and expected and expected.issubset(file_platforms(row))):
                 matches.append(row)
         return matches[0] if len(matches) == 1 else None
+
+    def modfile(self, mod_id, modfile_id):
+        result = self.get(self.base(mod_id) + '/files/' + str(positive_id(modfile_id, 'Modfile ID')))
+        if result.get('id') != int(modfile_id) or result.get('mod_id') != int(mod_id):
+            raise ApiError('mod.io вернул файл с неожиданным Modfile ID или Mod ID.')
+        return result
 
     def _chunks(self, parts):
         for part in parts:
@@ -163,12 +190,17 @@ class Client:
                 yield part
 
     def add_file(self, mod_id, entry, path=None, upload_id=None):
-        fields = {'active': 'false', 'platforms[]': entry['target_platform'], 'filehash': entry['md5']}
+        platforms = target_platforms(entry)
+        if not platforms:
+            raise ValueError('Не указаны платформы Modfile.')
+        # Repeated form fields: one ZIP / Modfile may target multiple platforms.
+        fields = [('active', 'false'), ('filehash', entry['md5'])]
+        fields.extend(('platforms[]', platform) for platform in platforms)
         if upload_id:
-            fields['upload_id'] = upload_id
+            fields.append(('upload_id', upload_id))
         boundary = 'MapCombiner' + uuid.uuid4().hex
         parts = []
-        for key, value in fields.items():
+        for key, value in fields:
             parts.append(f'--{boundary}\r\nContent-Disposition: form-data; name="{key}"\r\n\r\n{value}\r\n'.encode())
         if path is not None:
             filename = entry.get('filename', Path(path).name)

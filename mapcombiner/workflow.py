@@ -19,10 +19,21 @@ TERMINAL = SUCCESS | {'FAILED', 'BLOCKER', 'CANCELLED', 'NeedsUserInput'}
 def check_overrides(inputs):
     if not inputs.get('overrides_enabled'):
         return
+    meta = inputs.get('meta', '').strip()
+    if meta:
+        path = Path(meta)
+        if not path.is_file():
+            raise PipelineError(f'MapMetaConfig: файл не найден — {path}', 'BLOCKER')
+        if path.suffix.lower() != '.asset':
+            raise PipelineError('MapMetaConfig: выберите файл .asset', 'BLOCKER')
+        # Replacing only metadata keeps image references from that config, or
+        # lets Unity discover package images. Their availability is checked there.
+        if not any(inputs.get(key, '').strip() for key in ('preview', 'icon')):
+            return
     missing = [label for key, label in (('preview', 'Preview'), ('icon', 'Preview Mini')) if not inputs.get(key, '').strip()]
     if missing:
-        raise PipelineError('Включена замена дополнительных файлов. Укажите ' + ' и '.join(missing)
-            + ' либо отключите замену. MapMetaConfig можно оставить пустым.', 'BLOCKER')
+        raise PipelineError('Для замены изображений укажите ' + ' и '.join(missing)
+            + '. Можно заменить только MapMetaConfig, оставив оба поля изображений пустыми, либо отключить замену.', 'BLOCKER')
     for key, label in (('preview', 'Preview'), ('icon', 'Preview Mini')):
         path = Path(inputs[key])
         if not path.is_file():
@@ -67,6 +78,7 @@ def summary(result, step, job):
     row.update(step=step, job_directory=str(job))
     unity = result.get('unity_result') or {}
     row['candidates'] = unity.get('candidates', [])
+    row['diagnostics'] = unity.get('diagnostics', [])
     fixes = result.get('map_fixes') or unity.get('mapFixes') or {}
     row['materials'] = {key: fixes.get(key) for key in ('status', 'materialsSeen', 'treeMaterials', 'foliageMaterials', 'materialsEditedInPlace', 'materialCopies', 'volumeCopies')}
     path = Path(job) / 'validation.json'

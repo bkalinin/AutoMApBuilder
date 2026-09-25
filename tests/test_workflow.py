@@ -178,6 +178,52 @@ class WorkflowTests(unittest.TestCase):
         result = workflow.execute(accepted, runner=self.runner())
         self.assertEqual(result['status'], 'PASS')
 
+    def test_meta_only_override_reaches_worker_without_image_overrides(self):
+        meta = self.root / 'MapMetaConfig.asset'
+        meta.write_text('fixture metadata')
+        inputs = {'package': str(self.package), 'overrides_enabled': True, 'meta': str(meta)}
+        for mode in ({'validate_only': True}, {'build_only': True}, {}):
+            with self.subTest(mode=mode):
+                request = workflow.create_request(self.config, inputs, ['steam', 'playstation', 'xbox'], **mode)
+                runner = MagicMock(side_effect=self.runner())
+                result = workflow.execute(request, runner=runner)
+                self.assertEqual(result['status'], 'PASS')
+                self.assertIn('meta', result['fingerprint'])
+                self.assertTrue(runner.called)
+                for call in runner.call_args_list:
+                    self.assertEqual(call.args[3], str(meta))
+                    self.assertIsNone(call.args[4])
+                    self.assertIsNone(call.args[5])
+
+    def test_meta_only_override_missing_or_wrong_type_is_blocked(self):
+        wrong = self.root / 'metadata.txt'
+        wrong.touch()
+        for meta in (self.root / 'missing.asset', wrong):
+            with self.subTest(meta=meta), self.assertRaises(PipelineError) as error:
+                workflow.create_request(self.config, {'package': str(self.package), 'overrides_enabled': True,
+                    'meta': str(meta)}, ['steam'], build_only=True)
+            self.assertEqual(error.exception.status, 'BLOCKER')
+            self.assertIn('MapMetaConfig', str(error.exception))
+        meta = self.root / 'MapMetaConfig.asset'
+        meta.touch()
+        request = workflow.create_request(self.config, {'package': str(self.package), 'overrides_enabled': True,
+            'meta': str(meta)}, ['steam'], build_only=True)
+        meta.unlink()
+        with patch.object(workflow, 'build') as runner:
+            result = workflow.execute(request)
+        self.assertEqual(result['status'], 'BLOCKER')
+        runner.assert_not_called()
+
+    def test_meta_override_does_not_allow_half_an_image_pair(self):
+        meta, image = self.root / 'MapMetaConfig.asset', self.root / 'preview.png'
+        meta.touch()
+        image.touch()
+        for key, missing in (('preview', 'Preview Mini'), ('icon', 'Preview')):
+            with self.subTest(key=key), self.assertRaises(PipelineError) as error:
+                workflow.create_request(self.config, {'package': str(self.package), 'overrides_enabled': True,
+                    'meta': str(meta), key: str(image)}, ['steam'], build_only=True)
+            self.assertIn(missing, str(error.exception))
+
     def test_only_new_imported_standalone_materials_are_writable(self):
         from mapcombiner.pipeline import writable_material_paths
         from mapcombiner.package_import import AssetEntry

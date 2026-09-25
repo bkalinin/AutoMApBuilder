@@ -19,6 +19,7 @@ from .workflow import create_request, cancel
 from .contracts import write_json
 from .upload_ui import UploadPanel
 from .uploads import successful_artifacts
+from .queue_ui import QueuePanel
 
 ROOT = Path(__file__).resolve().parents[1]
 STATES = {'PASS': 'Готово', 'WARNING': 'Готово с предупреждениями', 'FAILED': 'Ошибка',
@@ -26,7 +27,9 @@ STATES = {'PASS': 'Готово', 'WARNING': 'Готово с предупреж
     'NEEDS_DECISION': 'Есть предупреждения', 'RUNNING': 'Выполняется'}
 STEPS = {'inspect': 'Подготовка', 'validation': 'Проверка карты', 'steam': 'Сборка Steam',
     'playstation': 'Сборка PlayStation', 'xbox': 'Сборка Xbox'}
-FIXES = {'disable_fog': 'Отключить Fog', 'hdri_distortion_none': 'HDRI Sky: Distortion → None',
+FIXES = {'repair_minimap_bounds': 'Миникарта: исправлять некорректные границы по области CameraTest',
+    'all_materials_hdrp_lit': 'Все материалы карты → HDRP/Lit',
+    'disable_fog': 'Отключить Fog', 'hdri_distortion_none': 'HDRI Sky: Distortion → None',
     'validate_foliage_materials': 'Проверять материалы деревьев',
     'auto_fix_foliage_shader': 'Исправлять шейдер деревьев → HDRP/Lit',
     'auto_fix_foliage_diffusion_profile': 'Назначать выбранный профиль Foliage листьям',
@@ -284,6 +287,12 @@ class MainWindow(QMainWindow):
                 self.modio.report_path = str(self.run_directory / 'upload-report.html')
                 self.modio.show_report(report)
         self.timer = QTimer(self)
+        self.queue = QueuePanel(self)
+        queue_scroll = QScrollArea()
+        queue_scroll.setWidgetResizable(True)
+        queue_scroll.setWidget(self.queue)
+        self.queue_tab = self.tabs.addTab(queue_scroll, 'Очередь')
+        self.queue.activityChanged.connect(self.queue_activity_changed)
         self.timer.setInterval(1000)
         self.timer.timeout.connect(self.poll)
         self.timer.start()
@@ -324,6 +333,11 @@ class MainWindow(QMainWindow):
             widget = FileField(filt)
             self.override_fields[key] = widget
             override_form.addRow(label, widget)
+        override_note = QLabel('Можно выбрать только MapMetaConfig: изображения берутся из конфига или карты. '
+                              'Для замены изображений укажите Preview и Preview Mini вместе.')
+        override_note.setWordWrap(True)
+        override_note.setObjectName('hint')
+        override_form.addRow(override_note)
         layout.addWidget(self.overrides)
         group = QGroupBox('Собрать для')
         row = QHBoxLayout(group)
@@ -385,7 +399,14 @@ class MainWindow(QMainWindow):
             layout.addWidget(widget)
         self.probe_fix = QCheckBox('PlayStation: Reflection Probe → Realtime / On Enable')
         layout.addWidget(self.probe_fix)
-        note = QLabel('Настройки материалов применяются ко всем выбранным платформам.\nПрофиль Foliage для каждого проекта указан во вкладке «Пути».')
+        note = QLabel('Исправления применяются ко всем выбранным платформам.\n'
+            'Миникарта: исправляются размеры 1 × 1, неположительные размеры и некорректные числа. '
+            'Используется область из вкладки «Проверка», без запуска CameraTest. '
+            'Совпадение изображения с трассой проверьте в игре.\n'
+            '«Все материалы карты → HDRP/Lit» конвертирует материалы объектов, включая LOD и Combined Mesh. '
+            'Многослойные материалы и текстуры, которые нельзя перенести, сохраняются с исходным шейдером; '
+            'причина указывается в отчёте. Внешний вид специальных шейдеров проверьте в игре.\n'
+            'Профиль Foliage для каждого проекта указан во вкладке «Пути».')
         note.setWordWrap(True)
         note.setObjectName('hint')
         layout.addWidget(note)
@@ -521,7 +542,7 @@ class MainWindow(QMainWindow):
         self.detail.setText('Параметры сброшены. Пути проектов, Unity и профилей Foliage сохранены.')
 
     def start(self, validate_only=False, build_only=False):
-        if self.modio.busy or self.active_process():
+        if self.modio.busy or self.active_process() or self.queue.busy:
             return
         try:
             self.save()
@@ -615,6 +636,9 @@ class MainWindow(QMainWindow):
         self.launch(self.run_directory / 'request.json', ['--recover'])
 
     def cancel_run(self):
+        if self.queue.busy:
+            self.queue.stop()
+            return
         if self.modio.busy:
             self.modio.cancel()
             self.cancel_button.setEnabled(False)
@@ -630,8 +654,13 @@ class MainWindow(QMainWindow):
         return self.process is not None and self.process.state() != QProcess.ProcessState.NotRunning
 
     def set_busy(self, busy, paused=False):
-        busy = busy or self.modio.busy
+        queue_busy = hasattr(self, 'queue') and self.queue.busy
+        busy = busy or self.modio.busy or queue_busy
         self.tabs.setEnabled(not busy and not paused)
+        if hasattr(self, 'queue'):
+            self.tabs.setEnabled(queue_busy or (not busy and not paused))
+            for index in range(self.tabs.count()):
+                self.tabs.setTabEnabled(index, not queue_busy or index == self.queue_tab)
         self.reset_button.setEnabled(not busy and not paused)
         self.validate_button.setEnabled(not busy and not paused)
         self.build_button.setEnabled(not busy and not paused)
@@ -644,6 +673,13 @@ class MainWindow(QMainWindow):
         self.modio.show_artifacts(artifacts)
         self.modio.update_available(not busy and not paused)
 
+    def queue_activity_changed(self):
+        self.set_busy(self.active_process())
+        self.poll()
+        if not self.queue.busy and not self.run_directory:
+            self.status.setText('Очередь')
+            self.detail.setText((self.queue.data or {}).get('message', 'Готов к работе'))
+
     def upload_activity_changed(self, busy):
         if self.run_directory:
             self.poll()
@@ -651,7 +687,7 @@ class MainWindow(QMainWindow):
             self.set_busy(False)
 
     def start_upload(self):
-        if self.active_process() or self.modio.busy or (self.run_directory and is_running(self.run_directory)):
+        if self.queue.busy or self.active_process() or self.modio.busy or (self.run_directory and is_running(self.run_directory)):
             return
         try:
             self.save()
@@ -660,11 +696,29 @@ class MainWindow(QMainWindow):
             self.modio.show_error(str(error))
 
     def start_gallery(self):
-        if self.active_process() or self.modio.busy or (self.run_directory and is_running(self.run_directory)):
+        if self.queue.busy or self.active_process() or self.modio.busy or (self.run_directory and is_running(self.run_directory)):
             return
         self.modio.gallery(self.settings['config']['state_root'])
 
     def poll(self):
+        if self.queue.busy:
+            self.set_busy(False)
+            self.status.setText('Обработка очереди')
+            self.detail.setText((self.queue.data or {}).get('message', 'Подготовка'))
+            data = self.queue.data or {}
+            active = data.get('active') or {}
+            item = next((i for i in data.get('items', []) if i['id'] == active.get('item_id')
+                         or i['status'] == 'PROCESSING'), None)
+            for step, label in self.stage_labels.items():
+                result = (item or {}).get('results', {}).get(step, {})
+                state = 'Выполняется' if active.get('step') == step else STATES.get(result.get('status'), '—')
+                label.setText(('CameraTest' if step == 'validation' else PLATFORMS[step].label) + '   ' + state)
+            stats = (item or {}).get('results', {}).get('validation', {}).get('validation', {})
+            for key, label in self.metrics.items():
+                label.setText(f'{stats[key]:,}'.replace(',', ' ') if key in stats else '—')
+            self.continue_button.hide()
+            self.recover_button.hide()
+            return
         if not self.run_directory:
             return
         run = read_json(self.run_directory / 'run-manifest.json')
@@ -746,7 +800,7 @@ class MainWindow(QMainWindow):
             self.detail.setText('Не удалось сохранить настройки: ' + str(error))
             event.ignore()
             return
-        if self.modio.busy or self.active_process() or (self.run_directory and is_running(self.run_directory)):
+        if self.queue.busy or self.modio.busy or self.active_process() or (self.run_directory and is_running(self.run_directory)):
             event.ignore()
             if self.tray:
                 self.hide()

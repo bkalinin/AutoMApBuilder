@@ -14,6 +14,7 @@ namespace CarXMapCombiner
 {
     [Serializable] public class MapFixOptions
     {
+        public bool repair_minimap_bounds = true, all_materials_hdrp_lit = false;
         public bool disable_fog = false, hdri_distortion_none = true;
         public bool validate_foliage_materials = true, auto_fix_foliage_shader = true;
         public bool auto_fix_foliage_diffusion_profile = true, auto_fix_foliage_profile_registration = true;
@@ -135,12 +136,14 @@ namespace CarXMapCombiner
                     uses.Add(!tree ? -1 : foliage ? 1 : 0);
                 }
             var seen = new HashSet<Material>();
+            var checkedMaterials = new HashSet<Material>();
+            var skippedConversions = new HashSet<Material>();
             var trees = new HashSet<Material>();
             var leaves = new HashSet<Material>();
             var replacements = new Dictionary<(Material, bool), Material>();
             DiffusionProfileSettings expected = null;
             bool needsRegistration = false;
-            if (options.validate_foliage_materials)
+            if (options.validate_foliage_materials || options.all_materials_hdrp_lit)
                 foreach (var renderer in renderers.OrderBy(r => ObjectPath(r.transform), StringComparer.Ordinal))
                 {
                     var billboard = renderer as BillboardRenderer;
@@ -154,21 +157,39 @@ namespace CarXMapCombiner
                         { report.Warn("null", context, "Missing material"); continue; }
                         seen.Add(original);
                         Classify(renderer, original, out bool tree, out bool foliage);
-                        if (!tree) continue;
-                        bool firstTreeUse = trees.Add(original);
+                        if (!tree && !options.all_materials_hdrp_lit) continue;
+                        if (tree) trees.Add(original);
+                        // Converting all shaders does not implicitly enable foliage profile changes.
+                        foliage = foliage && options.validate_foliage_materials;
                         if (foliage) leaves.Add(original);
                         string source = Asset(original);
                         if (original.shader == null || original.shader.name == "Hidden/InternalErrorShader")
                             report.Warn(source, context, "Missing/error shader");
-                        if (firstTreeUse) CheckBrokenTextures(original, context, report);
+                        if (checkedMaterials.Add(original)) CheckBrokenTextures(original, context, report);
+                        bool wrongShader = original.shader == null || original.shader.name != "HDRP/Lit";
+                        bool changeShader = wrongShader && (options.all_materials_hdrp_lit ||
+                            tree && options.validate_foliage_materials && options.auto_fix_foliage_shader);
+                        if (changeShader)
+                        {
+                            if (skippedConversions.Contains(original)) continue;
+                            var targetShader = Shader.Find("HDRP/Lit");
+                            if (targetShader == null) throw new JobException("HDRP/Lit shader is unavailable");
+                            string reason = MaterialShaderConversion.SkipReason(original, targetShader);
+                            if (reason != null)
+                            {
+                                skippedConversions.Add(original);
+                                report.Warn(source, context, "HDRP/Lit conversion skipped; original material and shader preserved. "
+                                    + reason + ". Check its appearance in the built map.");
+                                // Decide before editing/cloning or assigning a foliage profile.
+                                continue;
+                            }
+                        }
                         if (foliage)
                         {
                             if (expected == null) expected = ResolveProfile(options);
                             report.foliageProfile = Asset(expected);
                         }
-                        bool wrongShader = original.shader == null || original.shader.name != "HDRP/Lit";
                         bool wrongProfile = foliage && !ProfileMatches(original, expected);
-                        bool changeShader = wrongShader && options.auto_fix_foliage_shader;
                         bool changeProfile = wrongProfile && options.auto_fix_foliage_diffusion_profile;
                         if (wrongShader && !changeShader) report.Warn(source, context, "Tree material shader is not HDRP/Lit; shader auto-fix disabled");
                         if (wrongProfile && !changeProfile) report.Warn(source, context, "Foliage Diffusion Profile missing/different; profile auto-fix disabled");
@@ -192,12 +213,13 @@ namespace CarXMapCombiner
                                 else
                                 {
                                     output = new Material(original) { name = original.name };
-                                    path = AssetDatabase.GenerateUniqueAssetPath(folder + "/" + SafeName(original.name) + (foliage ? "_foliage.mat" : "_tree.mat"));
+                                    path = AssetDatabase.GenerateUniqueAssetPath(folder + "/" + SafeName(original.name) + (foliage ? "_foliage.mat" : tree ? "_tree.mat" : "_lit.mat"));
                                     AssetDatabase.CreateAsset(output, path);
                                     ++report.materialCopies;
                                     report.Record(source, "mapMaterialCopy", source, path, "Keep baseline/SDK/embedded materials or materials shared across different roles unchanged");
                                 }
-                                if (changeShader) ConvertShader(output, source, report);
+                                if (changeShader) ConvertShader(output, source, report,
+                                    options.all_materials_hdrp_lit ? "User option: all map renderer materials use HDRP/Lit" : "Tree materials must use HDRP/Lit");
                                 if (foliage && options.auto_fix_foliage_diffusion_profile)
                                 {
                                     var oldProfile = Profile(output);
@@ -261,23 +283,47 @@ namespace CarXMapCombiner
                     report.Warn(Asset(material), context, "Missing texture reference: " + item.FindPropertyRelative("first").stringValue);
             }
         }
-        static void ConvertShader(Material material, string source, MapFixReport report)
+        static void ConvertShader(Material material, string source, MapFixReport report, string reason)
         {
             Shader shader = Shader.Find("HDRP/Lit");
             if (shader == null) throw new JobException("HDRP/Lit shader is unavailable");
+            var inputs = new MaterialShaderInputs(material);
             var textures = new Dictionary<string, (Texture texture, Vector2 scale, Vector2 offset, string before, string input)>();
-            foreach (var mapping in new[] { new[] { "_BaseColorMap", "_BaseColorMap", "_BaseMap", "_UnlitColorMap", "_MainTex" },
-                new[] { "_NormalMap", "_NormalMap", "_BumpMap" }, new[] { "_MaskMap", "_MaskMap" } })
+            // Retain all populated texture inputs supported by Lit, including detail/emission maps.
+            for (int i = 0; i < shader.GetPropertyCount(); ++i)
+            {
+                if (shader.GetPropertyType(i) != ShaderPropertyType.Texture) continue;
+                string destination = shader.GetPropertyName(i);
+                string[] candidates = MaterialShaderConversion.TextureInputs(destination);
+                foreach (string input in candidates)
+                    if (inputs.Texture(input, out var value) && value.texture != null)
+                    { textures[destination] = (value.texture, value.scale, value.offset, material.HasProperty(destination) ? Asset(material.GetTexture(destination)) : "not exposed by source shader", input); break; }
+            }
+            string colorKey = new[] { "_BaseColor", "_UnlitColor", "_Color" }.FirstOrDefault(k => inputs.Color(k, out _));
+            Color color = colorKey != null && inputs.Color(colorKey, out var sourceColor) ? sourceColor : Color.white;
+            float cutoff = inputs.Float("_AlphaCutoff", out var alpha) ? alpha : inputs.Float("_Cutoff", out alpha) ? alpha : 0.5f;
+            bool clip = material.IsKeywordEnabled("_ALPHATEST_ON") || inputs.Float("_AlphaCutoffEnable", out var enabled) && enabled > 0;
+            var floats = new Dictionary<string, float>();
+            foreach (var mapping in new[] { new[] { "_Metallic", "_Metallic" }, new[] { "_Smoothness", "_Smoothness", "_Glossiness" },
+                new[] { "_NormalScale", "_NormalScale", "_BumpScale" }, new[] { "_SurfaceType", "_SurfaceType", "_Surface" },
+                new[] { "_DoubleSidedEnable", "_DoubleSidedEnable" } })
                 foreach (string input in mapping.Skip(1))
-                    if (material.HasProperty(input) && material.GetTexture(input) != null)
-                    { textures[mapping[0]] = (material.GetTexture(input), material.GetTextureScale(input), material.GetTextureOffset(input), material.HasProperty(mapping[0]) ? Asset(material.GetTexture(mapping[0])) : "not exposed by source shader", input); break; }
-            string colorKey = material.HasProperty("_BaseColor") ? "_BaseColor" : material.HasProperty("_UnlitColor") ? "_UnlitColor" : material.HasProperty("_Color") ? "_Color" : null;
-            Color color = colorKey == null ? Color.white : material.GetColor(colorKey);
-            float cutoff = material.HasProperty("_AlphaCutoff") ? material.GetFloat("_AlphaCutoff") : material.HasProperty("_Cutoff") ? material.GetFloat("_Cutoff") : 0.5f;
-            bool clip = material.IsKeywordEnabled("_ALPHATEST_ON") || material.HasProperty("_AlphaCutoffEnable") && material.GetFloat("_AlphaCutoffEnable") > 0;
+                    if (inputs.Float(input, out float number)) { floats[mapping[0]] = number; break; }
+            if (!floats.ContainsKey("_SurfaceType") && inputs.Float("_Mode", out float mode) && mode >= 2)
+                floats["_SurfaceType"] = 1;
+            Color emission = MaterialShaderConversion.Emission(material, inputs, out string emissionReason);
             string old = material.shader != null ? material.shader.name : "null";
             material.shader = shader;
-            report.Record(Asset(material), "shader", old, shader.name, "Tree materials must use HDRP/Lit");
+            report.Record(Asset(material), "shader", old, shader.name, reason);
+            foreach (var entry in floats)
+            {
+                float before = material.GetFloat(entry.Key);
+                material.SetFloat(entry.Key, entry.Value);
+                if (before != entry.Value) report.Record(Asset(material), entry.Key, before, entry.Value, "Preserve source surface settings");
+            }
+            Color beforeEmission = material.GetColor("_EmissiveColor");
+            material.SetColor("_EmissiveColor", emission);
+            if (beforeEmission != emission) report.Record(Asset(material), "_EmissiveColor", beforeEmission, emission, emissionReason);
             foreach (var entry in textures)
             {
                 var oldScale = material.GetTextureScale(entry.Key);

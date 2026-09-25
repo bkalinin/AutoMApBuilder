@@ -120,11 +120,14 @@ namespace CarXMapCombiner
             AssetDatabase.SaveAssetIfDirty(manager);
             AutomationBridge.LogChange(AssetDatabase.GetAssetPath(manager), "targetScene", "", scenePath, "Prepare explicit build target");
             if (request.operation == "build") MaterialTrace.Capture(scene, "imported");
+            List<MinimapPreparation.FixedBounds> minimapBounds = null;
             if (request.mapFixes != null)
             {
                 result.mapFixes = new MapFixReport();
                 try
                 {
+                    if (request.mapFixes.repair_minimap_bounds)
+                        minimapBounds = MinimapPreparation.Apply(scene, request.validation, result.mapFixes);
                     MapFixes.Apply(scene, request.mapFixes, result.mapFixes, writableMaterialPaths: request.writableMaterialPaths);
                     if (BuildPlatform.Resolve(request.platform).IsPlayStation && request.reflectionProbeFix)
                         result.reflectionProbesPrepared = PlayStationPreparation.Apply(scene, result.mapFixes);
@@ -151,6 +154,7 @@ namespace CarXMapCombiner
                 }
             }
             EditorSceneManager.SaveScene(scene);
+            MinimapPreparation.VerifySaved(scene.path, minimapBounds);
             if (request.operation == "build") MaterialTrace.Capture(scene, "prepared");
         }
 

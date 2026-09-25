@@ -34,6 +34,22 @@ class GuiTests(unittest.TestCase):
         self.window.show()
         self.app.processEvents()
 
+    def test_minimap_option_persists_for_all_platforms_and_queue_snapshot(self):
+        self.assertTrue(self.window.fixes['repair_minimap_bounds'].isChecked())
+        self.window.fixes['repair_minimap_bounds'].setChecked(False)
+        self.window.fixes['all_materials_hdrp_lit'].setChecked(True)
+        settings = self.window.collect()
+        for group in ('map_fixes', 'playstation_map_fixes', 'xbox_map_fixes'):
+            self.assertFalse(settings['config'][group]['repair_minimap_bounds'])
+            self.assertTrue(settings['config'][group]['all_materials_hdrp_lit'])
+        self.window.save()
+        self.assertFalse(self.window.store.load()['config']['map_fixes']['repair_minimap_bounds'])
+        from mapcombiner.batch_queue import new_item
+        item = new_item(settings['config'], {'package': 'test.unitypackage'}, ['steam'])
+        self.window.fixes['repair_minimap_bounds'].setChecked(True)
+        self.window.collect()
+        self.assertFalse(item['config']['map_fixes']['repair_minimap_bounds'])
+
     def test_drop_local_package_and_create_real_workflow_request(self):
         package = self.root / 'Карта с пробелом.unitypackage'
         package.touch()
@@ -93,6 +109,23 @@ class GuiTests(unittest.TestCase):
         self.assertEqual(self.window.metrics['maxTris'].text(), '—')
         self.assertFalse(self.window.report_button.isEnabled())
         self.assertEqual(self.window.settings['ui']['last_run'], '')
+
+    def test_meta_only_override_starts_build_with_no_external_images(self):
+        package, meta = self.root / 'map.unitypackage', self.root / 'MapMetaConfig.asset'
+        package.touch()
+        meta.touch()
+        self.window.package.setText(str(package))
+        self.window.overrides.setChecked(True)
+        self.window.override_fields['meta'].setText(str(meta))
+        with patch.object(self.window, 'launch') as launch:
+            self.window.build_only_button.click()
+        launch.assert_called_once()
+        import json
+        request = json.loads(launch.call_args.args[0].read_text(encoding='utf-8'))
+        self.assertEqual(request['inputs']['meta'], str(meta))
+        self.assertFalse(request['inputs'].get('preview'))
+        self.assertFalse(request['inputs'].get('icon'))
+        self.assertTrue(request['build_only'])
 
     def test_empty_preview_overrides_show_reason_without_starting_worker(self):
         package = self.root / 'map.unitypackage'
@@ -276,6 +309,25 @@ class GuiTests(unittest.TestCase):
         from mapcombiner.gui import read_json
         request = read_json(launch.call_args.args[0])
         self.assertEqual(request['modio_zip_overrides'], {'steam': selected})
+
+    def test_modio_displays_console_pairs_and_actual_uploaded_platforms(self):
+        panel = self.window.modio
+        self.assertIn('PS4 + PS5', panel.zip_fields['playstation'].path.accessibleName())
+        self.assertIn('Xbox One + Xbox Series X|S', panel.zip_fields['xbox'].path.accessibleName())
+        panel.show_report({'status': 'UPLOADED', 'files': [
+            {'platform': 'playstation', 'status': 'UPLOADED', 'modfile_id': 101,
+             'uploaded_platforms': ['ps4', 'ps5']},
+            {'platform': 'xbox', 'status': 'UPLOADED', 'modfile_id': 102,
+             'uploaded_platforms': ['xboxone', 'xboxseriesx']}]})
+        self.assertIn('PlayStation → PS4 + PS5', panel.results.text())
+        self.assertIn('Xbox → Xbox One + Xbox Series X|S', panel.results.text())
+        self.assertEqual(panel.results.text().count('Modfile #'), 2)
+        panel.show_report({'status': 'NEEDS_REVIEW', 'files': [
+            {'platform': 'playstation', 'status': 'NEEDS_REVIEW', 'modfile_id': 101,
+             'uploaded_platforms': ['ps4'], 'message': 'Назначьте PS5 в mod.io.'}]})
+        self.assertNotIn('PS4 + PS5', panel.results.text())
+        self.assertIn('PlayStation → PS4', panel.results.text())
+        self.assertIn('Проверьте платформы', panel.state.text())
 
 
 if __name__ == '__main__':

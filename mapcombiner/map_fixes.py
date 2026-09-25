@@ -3,6 +3,8 @@ import re
 
 @dataclass(frozen=True)
 class MapFixConfig:
+    repair_minimap_bounds: bool = True
+    all_materials_hdrp_lit: bool = False
     disable_fog: bool = False
     hdri_distortion_none: bool = True
     validate_foliage_materials: bool = True

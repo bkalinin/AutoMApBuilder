@@ -10,7 +10,8 @@ import uuid
 import zipfile
 
 from .contracts import timestamp, write_json
-from .modio_client import ApiError, Cancelled, MULTIPART_THRESHOLD, PLATFORMS, check_filename
+from .modio_client import (ApiError, Cancelled, MULTIPART_THRESHOLD, PLATFORMS,
+                          check_filename, file_platforms, platform_names, target_platforms)
 
 
 @contextmanager
@@ -94,16 +95,19 @@ def inspect_zip(row, check):
 
 
 def render_upload_report(report):
-    rows = ''.join('<tr>' + ''.join('<td>' + escape(str(row.get(key, ''))) + '</td>'
-        for key in ('platform', 'status', 'archive', 'source', 'modfile_id', 'message')) + '</tr>'
-        for row in report.get('files', []))
+    rows = ''
+    for row in report.get('files', []):
+        values = [row.get('platform', ''),
+                  platform_names(row.get('uploaded_platforms', target_platforms(row))),
+                  *[row.get(key, '') for key in ('status', 'archive', 'source', 'modfile_id', 'message')]]
+        rows += '<tr>' + ''.join('<td>' + escape(str(value)) + '</td>' for value in values) + '</tr>'
     target = report.get('target', {})
     return ('<!doctype html><meta charset="utf-8"><title>MapCombiner — mod.io</title>'
         '<style>body{font:16px Segoe UI;margin:32px}td,th{padding:10px;border:1px solid #bbb}'
         'table{border-collapse:collapse}</style><h1>Загрузка в mod.io</h1><p>'
         + escape(f'{target.get("name", "")} · Mod #{target.get("mod_id", "")} · Game #{target.get("game_id", "")}')
         + '</p><p>Новые Modfiles: active=false. Сборка и локальные ZIP сохранены.</p>'
-        '<table><tr><th>Платформа</th><th>Upload</th><th>ZIP</th><th>Источник (build/manual)</th><th>Modfile ID</th><th>Причина</th></tr>'
+        '<table><tr><th>Сборка</th><th>Платформы mod.io</th><th>Upload</th><th>ZIP</th><th>Источник (build/manual)</th><th>Modfile ID</th><th>Причина</th></tr>'
         + rows + '</table>')
 
 
@@ -143,8 +147,10 @@ def upload_run(run_directory, state_root, target, client, *, overrides=None, not
 
         for row in rows:
             entry = None
+            requested = PLATFORMS[row['step']]
             view = {'platform': row['step'], 'filename': Path(row['archive']).name,
-                    'archive': row['archive'], 'source': row['source'], 'status': 'CHECKING', 'message': ''}
+                    'archive': row['archive'], 'source': row['source'], 'status': 'CHECKING', 'message': '',
+                    'target_platforms': list(requested)}
             report['files'].append(view)
             save()
             try:
@@ -153,21 +159,40 @@ def upload_run(run_directory, state_root, target, client, *, overrides=None, not
                 path, sha, md5 = inspect_zip(row, client.check)
                 key = f'{client.game_id}:{target["mod_id"]}:{row["step"]}:{sha}'
                 entry = journal['entries'].setdefault(key, {
-                    'platform': row['step'], 'target_platform': PLATFORMS[row['step']],
+                    'platform': row['step'], 'target_platforms': list(requested),
                     'game_id': client.game_id, 'mod_id': target['mod_id'], 'filename': path.name,
                     'sha256': sha, 'md5': md5, 'status': 'PENDING'})
+                entry.setdefault('filesize', path.stat().st_size)
+                view['target_platforms'] = list(target_platforms(entry))
+
+                def show_saved_result():
+                    view.update(entry)
+                    # Old uploads keep their original intent; do not label PS4-only as PS4+PS5.
+                    confirmed = entry.get('uploaded_platforms', target_platforms(entry))
+                    view['uploaded_platforms'] = list(confirmed)
+                    if not set(requested).issubset(confirmed):
+                        missing = [p for p in requested if p not in confirmed]
+                        view.update(status='NEEDS_REVIEW', message=(
+                            f'Modfile #{entry["modfile_id"]} уже создан. '
+                            f'Не подтверждены платформы: {platform_names(missing)}. '
+                            'Проверьте и назначьте их этому файлу в mod.io. Дубликат не отправляется.'))
+                    save()
 
                 def saved_result(result):
                     if (not isinstance(result.get('id'), int) or result['id'] <= 0
                             or result.get('mod_id') != int(target['mod_id'])):
                         raise ApiError('Ответ создания Modfile не содержит ожидаемый ID. Результат неизвестен.')
-                    entry.update(status='UPLOADED', modfile_id=result['id'], message='', uploaded=timestamp())
-                    view.update(entry)
-                    save()
+                    entry.update(status='UPLOADED', modfile_id=result['id'], message='', uploaded=timestamp(),
+                                 uploaded_platforms=file_platforms(result))
+                    show_saved_result()
 
                 if entry.get('modfile_id'):
-                    view.update(entry)
-                    save()
+                    confirmed = entry.get('uploaded_platforms', target_platforms(entry))
+                    if not set(requested).issubset(confirmed):
+                        # The user may already have assigned the extra platform on mod.io.
+                        result = client.modfile(target['mod_id'], entry['modfile_id'])
+                        entry['uploaded_platforms'] = file_platforms(result)
+                    show_saved_result()
                     continue
                 if entry['status'] in ('CREATING', 'UNCERTAIN'):
                     # Includes a crash after server success but before local persistence.
@@ -175,14 +200,21 @@ def upload_run(run_directory, state_root, target, client, *, overrides=None, not
                     if result:
                         saved_result(result)
                         continue
-                    raise ApiError('Результат предыдущего Add Modfile неизвестен. Автоматическая повторная отправка '
+                    message = ('Результат предыдущего Add Modfile неизвестен. Автоматическая повторная отправка '
                         'заблокирована во избежание дубликата. Проверьте Files на mod.io; журнал сохранён.')
+                    if entry.get('create_error'):
+                        message += '\nИсходная ошибка: ' + entry['create_error']
+                    raise ApiError(message)
+                # No uncertain Add Modfile exists: pending/failed uploads can adopt both targets.
+                entry['target_platforms'] = list(requested)
+                entry.pop('target_platform', None)
                 entry.update(status='UPLOADING', message='')
                 view.update(entry)
                 save()
                 upload_id = client.multipart(target['mod_id'], path, entry, save) if path.stat().st_size > MULTIPART_THRESHOLD else None
                 client.check()
                 # Durable intent BEFORE the non-idempotent final POST.
+                entry.pop('create_error', None)
                 entry.update(status='CREATING', create_started=int(time.time()))
                 view.update(entry)
                 save()
@@ -191,6 +223,7 @@ def upload_run(run_directory, state_root, target, client, *, overrides=None, not
                                              path=None if upload_id else path)
                     saved_result(result)
                 except ApiError as error:
+                    entry['create_error'] = client.safe(error)
                     entry['status'] = 'UNCERTAIN' if error.transient else 'FAILED'
                     raise
             except Cancelled as error:
@@ -204,7 +237,11 @@ def upload_run(run_directory, state_root, target, client, *, overrides=None, not
                 break
             except Exception as error:
                 message = client.safe(error)
-                if entry:
+                if entry and entry.get('modfile_id'):
+                    # A failed GET must not erase the known upload or allow a duplicate POST.
+                    view.update(entry, status='NEEDS_REVIEW',
+                                uploaded_platforms=list(entry.get('uploaded_platforms', target_platforms(entry))))
+                elif entry:
                     if entry['status'] in ('CREATING', 'UNCERTAIN'):
                         entry['status'] = 'UNCERTAIN'
                     else:
@@ -217,7 +254,11 @@ def upload_run(run_directory, state_root, target, client, *, overrides=None, not
                 save()
         if report['status'] != 'CANCELLED':
             succeeded = sum(f['status'] == 'UPLOADED' for f in report['files'])
-            report['status'] = 'UPLOADED' if succeeded == len(rows) else 'PARTIAL' if succeeded else 'FAILED'
+            if any(f['status'] == 'NEEDS_REVIEW' for f in report['files']) and all(
+                    f['status'] in ('UPLOADED', 'NEEDS_REVIEW') for f in report['files']):
+                report['status'] = 'NEEDS_REVIEW'
+            else:
+                report['status'] = 'UPLOADED' if succeeded == len(rows) else 'PARTIAL' if succeeded else 'FAILED'
         report['finished'] = timestamp()
         save()
     return report

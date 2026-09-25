@@ -9,13 +9,16 @@ from PySide6.QtWidgets import (QCheckBox, QFileDialog, QFormLayout, QHBoxLayout,
     QLabel, QLineEdit, QPlainTextEdit, QPushButton, QVBoxLayout, QWidget)
 
 from .credentials import TokenStore
-from .modio_client import Client, Cancelled, positive_id
+from .modio_client import Client, Cancelled, PLATFORMS, platform_names, positive_id, target_platforms
 from .uploads import upload_run, selected_artifacts
 from .texture_gallery import build_gallery, file_stamp
 
 LABELS = {'steam': 'Steam', 'playstation': 'PlayStation', 'xbox': 'Xbox'}
+UPLOAD_LABELS = {key: f'{label} → {platform_names(PLATFORMS[key])}' for key, label in LABELS.items()}
+EMPTY_RESULTS = '\n'.join(label + ' —' for label in UPLOAD_LABELS.values())
 STATUSES = {'CHECKING': 'Проверка ZIP', 'UPLOADING': 'Загрузка', 'CREATING': 'Создание Modfile',
     'UPLOADED': 'Uploaded', 'FAILED': 'Failed', 'UNCERTAIN': 'Результат неизвестен',
+    'NEEDS_REVIEW': 'Проверьте платформы на mod.io',
     'CANCELLED': 'Отменено', 'PARTIAL': 'Часть файлов загружена'}
 
 
@@ -49,7 +52,7 @@ class ZipField(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         row = QHBoxLayout()
-        row.addWidget(QLabel(LABELS[platform]))
+        row.addWidget(QLabel(UPLOAD_LABELS[platform]))
         row.addStretch()
         self.manual = QCheckBox('Свой ZIP')
         self.choose_button = QPushButton('Выбрать…')
@@ -61,7 +64,7 @@ class ZipField(QWidget):
         self.path.setWordWrapMode(QTextOption.WrapMode.WrapAnywhere)
         self.path.setFixedHeight(58)
         self.path.setPlaceholderText('В текущем задании ZIP отсутствует. Можно выбрать свой файл.')
-        self.path.setAccessibleName(LABELS[platform] + ' — полный путь ZIP')
+        self.path.setAccessibleName(UPLOAD_LABELS[platform] + ' — полный путь ZIP')
         layout.addWidget(self.path)
         self.path.textChanged.connect(self.edited)
         self.manual.toggled.connect(self.toggled)
@@ -180,7 +183,7 @@ class UploadPanel(QWidget):
         self.state.setTextFormat(Qt.TextFormat.PlainText)
         self.state.setWordWrap(True)
         layout.addWidget(self.state)
-        self.results = QLabel('Steam —\nPlayStation —\nXbox —')
+        self.results = QLabel(EMPTY_RESULTS)
         self.results.setTextFormat(Qt.TextFormat.PlainText)
         self.results.setWordWrap(True)
         self.results.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -243,7 +246,7 @@ class UploadPanel(QWidget):
     def invalidate_target(self):
         self.target = None
         self.mod_name.setText('Сначала проверьте Mod ID. Название появится здесь.')
-        self.results.setText('Steam —\nPlayStation —\nXbox —')
+        self.results.setText(EMPTY_RESULTS)
         self.report_path = ''
         self.report_button.setEnabled(False)
         self.update_available()
@@ -254,7 +257,7 @@ class UploadPanel(QWidget):
         self.can_upload = True
         self.report_path = ''
         self.report_button.setEnabled(False)
-        self.results.setText('Steam —\nPlayStation —\nXbox —')
+        self.results.setText(EMPTY_RESULTS)
         self.state.setText('Upload: —')
         self.gallery_path = ''
         self.gallery_selection = None
@@ -384,6 +387,9 @@ class UploadPanel(QWidget):
         lines = []
         for key, label in LABELS.items():
             row = by_platform.get(key, {})
+            platforms = row.get('uploaded_platforms', target_platforms(row))
+            if platforms:
+                label += ' → ' + platform_names(platforms)
             value = STATUSES.get(row.get('status'), row.get('status', '—'))
             if row.get('modfile_id'):
                 value += f' — Modfile #{row["modfile_id"]}'

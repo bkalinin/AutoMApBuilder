@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -116,10 +117,38 @@ namespace CarXMapCombiner
                 // source is new to the map, but shared between leaf, trunk and non-tree slots.
                 // It must still be copied to keep those incompatible uses separate.
                 string[] writable = { importedPath, stalePath, AssetDatabase.GetAssetPath(source) };
+                // A splat material cannot be reduced to Lit's single base map. Cover
+                // owned + baseline, tree auto-fix, and repeated Combined Mesh slots.
+                string splatShaderPath = root + "/SplatFixture.shader";
+                File.WriteAllText(splatShaderPath, "Shader \"Hidden/CarXMapCombinerTests/Splat\" { Properties { "
+                    + "_splat0(\"Grass\",2D)=\"white\" {} _splat1(\"Gravel\",2D)=\"white\" {} "
+                    + "_splatmap(\"Mask\",2D)=\"white\" {} _EmissionColor(\"GI colour\",Color)=(1,1,1,1) "
+                    + "} SubShader { Pass {} } }");
+                AssetDatabase.ImportAsset(splatShaderPath, ImportAssetOptions.ForceSynchronousImport);
+                var splatShader = AssetDatabase.LoadAssetAtPath<Shader>(splatShaderPath);
+                Require(splatShader != null, "splat shader fixture imported");
+                var splat = new Material(splatShader) { name = "splat_material.001 3" };
+                string splatPath = root + "/Splat.mat";
+                AssetDatabase.CreateAsset(splat, splatPath);
+                splat.SetTexture("_splat0", texture);
+                splat.SetTexture("_splat1", texture);
+                splat.SetTexture("_splatmap", texture);
+                splat.SetTextureScale("_splat0", new Vector2(70, 70));
+                var splatTree = Renderer("TreeLeaves_splat", splat, scene);
+                splatTree.sharedMaterials = new[] { splat, splat };
+                var baselineSplat = new Material(splat) { name = "SDK layered ground" };
+                AssetDatabase.CreateAsset(baselineSplat, root + "/BaselineSplat.mat");
+                var splatGround = Renderer("Combined Mesh ground", baselineSplat, scene);
+                writable = writable.Concat(new[] { splatPath }).ToArray();
                 AssetDatabase.SaveAssets();
+                string splatBefore = File.ReadAllText(splatPath);
                 var report = new MapFixReport();
                 Require(source.GetTexture("_MainTex") == texture, "fixture texture persisted before conversion");
                 MapFixes.Apply(scene, options, report, root, writable);
+                Require(splatTree.sharedMaterials.All(m => m == splat) && splat.shader == splatShader
+                    && File.ReadAllText(splatPath) == splatBefore, "unsafe tree conversion preserves source material and bindings");
+                Require(report.warnings.Count(w => w.asset == splatPath && w.issue.Contains("conversion skipped")) == 1,
+                    "one actionable warning per skipped material despite repeated slots");
                 Require(leaves.sharedMaterial.shader.name == "HDRP/Lit", "leaf shader conversion");
                 Require(trunk.sharedMaterial.shader.name == "HDRP/Lit", "inactive LOD trunk conversion");
                 Require(poster.sharedMaterial == source && source.shader.name == "Standard", "non-tree renderer and shared source preserved");
@@ -157,6 +186,52 @@ namespace CarXMapCombiner
                 var second = new MapFixReport();
                 MapFixes.Apply(scene, options, second, root, writable);
                 Require(second.changes.Count == 0, "fixes must be idempotent");
+                // Non-tree materials must be covered by the explicit all-materials mode,
+                // including serialized texture/UV/cutout inputs hidden by an error shader.
+                var grandstand = new Material(Shader.Find("Standard")) { name = "Tribune" };
+                string grandstandPath = root + "/Tribune.mat";
+                AssetDatabase.CreateAsset(grandstand, grandstandPath);
+                grandstand.SetTexture("_MainTex", texture);
+                grandstand.SetTextureScale("_MainTex", new Vector2(3, 4));
+                grandstand.SetTextureOffset("_MainTex", new Vector2(0.2f, 0.3f));
+                grandstand.SetColor("_Color", Color.green);
+                grandstand.SetFloat("_Cutoff", 0.29f);
+                grandstand.EnableKeyword("_ALPHATEST_ON");
+                grandstand.shader = Shader.Find("Hidden/InternalErrorShader");
+                EditorUtility.SetDirty(grandstand);
+                AssetDatabase.SaveAssetIfDirty(grandstand);
+                string grandstandGuid = AssetDatabase.AssetPathToGUID(grandstandPath);
+                var standRenderer = Renderer("Combined Mesh grandstand", grandstand, scene);
+                standRenderer.sharedMaterials = new[] { grandstand, grandstand };
+                standRenderer.gameObject.SetActive(false);
+                options.all_materials_hdrp_lit = true;
+                options.validate_foliage_materials = false;
+                var allReport = new MapFixReport();
+                MapFixes.Apply(scene, options, allReport, root, new[] { grandstandPath, splatPath });
+                Require(splatTree.sharedMaterials.All(m => m == splat) && splat.shader == splatShader
+                    && splatGround.sharedMaterial == baselineSplat && baselineSplat.shader == splatShader
+                    && File.ReadAllText(splatPath) == splatBefore, "all-material mode preserves owned and shared splat materials without clones");
+                Require(!allReport.changes.Any(c => c.asset == splatPath || c.asset == AssetDatabase.GetAssetPath(baselineSplat)),
+                    "skipped materials have no edit/copy/change records");
+                Require(allReport.status == "WARNING" && allReport.warnings.Any(w => w.issue.Contains("_splatmap")),
+                    "skipped blend inputs are reported without failing the build");
+                Require(standRenderer.sharedMaterials.All(m => m == grandstand) && grandstand.shader.name == "HDRP/Lit", "owned grandstand converted in place, including repeated inactive slots");
+                Require(grandstand.GetTexture("_BaseColorMap") == texture
+                    && grandstand.GetTextureScale("_BaseColorMap") == new Vector2(3, 4)
+                    && grandstand.GetTextureOffset("_BaseColorMap") == new Vector2(0.2f, 0.3f)
+                    && grandstand.GetColor("_BaseColor") == Color.green
+                    && Mathf.Approximately(grandstand.GetFloat("_AlphaCutoff"), 0.29f), "error shader serialized inputs restored");
+                Require(poster.sharedMaterial != source && poster.sharedMaterial.shader.name == "HDRP/Lit"
+                    && source.shader.name == "Standard", "non-tree baseline copied and original preserved");
+                Require(HDMaterial.GetDiffusionProfile(imported) == foliage, "existing Lit foliage retained in broad conversion");
+                AssetDatabase.ImportAsset(grandstandPath, ImportAssetOptions.ForceUpdate);
+                Require(AssetDatabase.AssetPathToGUID(grandstandPath) == grandstandGuid
+                    && AssetDatabase.LoadAssetAtPath<Material>(grandstandPath).GetTexture("_BaseColorMap") == texture, "grandstand GUID and texture survive reload");
+                var repeatedAll = new MapFixReport();
+                MapFixes.Apply(scene, options, repeatedAll, root, new[] { grandstandPath });
+                Require(repeatedAll.changes.Count == 0, "all-material conversion is idempotent");
+                options.all_materials_hdrp_lit = false;
+                options.validate_foliage_materials = true;
                 options.disable_fog = true;
                 MapFixes.Apply(scene, options, new MapFixReport(), root);
                 Require(volume.sharedProfile.TryGet<Fog>(out var disabledFog) && !disabledFog.active && fog.active, "Fog disabled in map copy only");

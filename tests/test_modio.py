@@ -8,7 +8,7 @@ import zipfile
 
 from mapcombiner.contracts import sha256, write_json
 from mapcombiner.credentials import TokenStore
-from mapcombiner.modio_client import Client, ApiError, PART_SIZE
+from mapcombiner.modio_client import Client, ApiError, PART_SIZE, PLATFORMS, target_platforms
 from mapcombiner.uploads import upload_run
 
 TARGET = {'game_id': 5892, 'mod_id': 6214018, 'name': 'Tomato Sportsland'}
@@ -27,7 +27,8 @@ class FakeClient(Client):
         self.created.append(entry['platform'])
         if entry['platform'] in self.fail:
             raise ApiError('Rules engine validation failed', 422, 13002)
-        result = {'id': len(self.created) + 100, 'mod_id': mod_id}
+        result = {'id': len(self.created) + 100, 'mod_id': mod_id,
+                  'platforms': [{'platform': p} for p in target_platforms(entry)]}
         self.server.append(result)
         if self.ambiguous:
             raise ApiError('Timeout')
@@ -35,6 +36,9 @@ class FakeClient(Client):
 
     def reconcile(self, mod_id, entry):
         return self.server[-1] if self.server else None
+
+    def modfile(self, mod_id, modfile_id):
+        return next(row for row in self.server if row['id'] == modfile_id)
 
 
 class ModioTests(unittest.TestCase):
@@ -72,6 +76,8 @@ class ModioTests(unittest.TestCase):
         self.assertEqual(second['status'], 'UPLOADED')
         self.assertEqual(self.before, self.manifest.read_bytes())
         self.assertTrue(all(Path(j['archive']).exists() for j in jobs))
+        self.assertEqual([r['uploaded_platforms'] for r in second['files']],
+                         [['windows'], ['ps4', 'ps5'], ['xboxone', 'xboxseriesx']])
 
     def test_ambiguous_post_is_reconciled_without_second_post(self):
         self.fixture()
@@ -92,6 +98,141 @@ class ModioTests(unittest.TestCase):
         report = upload_run(self.directory, self.state, TARGET, client)
         self.assertEqual(report['files'][0]['status'], 'UNCERTAIN')
         self.assertEqual(client.created, ['steam'])
+        self.assertEqual(report['files'][0]['create_error'], 'Timeout')
+        self.assertIn('Исходная ошибка: Timeout', report['files'][0]['message'])
+        report = upload_run(self.directory, self.state, TARGET, client)
+        self.assertEqual(report['files'][0]['message'].count('Исходная ошибка:'), 1)
+        self.assertEqual(client.created, ['steam'])
+        self.assertEqual(report['files'][0]['filesize'], (self.root / 'steam.zip').stat().st_size)
+
+    def test_reconcile_matches_server_renamed_zip(self):
+        client = Client(5892, 'test-oauth-secret')
+        entry = {'filename': 'SunRise_Xbox_v2.zip', 'md5': 'ab' * 16,
+                 'target_platform': 'xboxone', 'create_started': 1000, 'filesize': 123}
+        row = {'id': 42, 'mod_id': TARGET['mod_id'], 'filename': 'sunrise_xbox_v2-abcd.zip',
+               'filehash': {'md5': ('ab' * 16).upper()}, 'date_added': 1001,
+               'filesize': 123, 'platforms': [{'platform': 'xboxone'}]}
+        with patch.object(client, 'rows', return_value=[row]):
+            self.assertEqual(client.reconcile(TARGET['mod_id'], entry), row)
+        # Older journals did not store the size; they still recover by hash.
+        entry.pop('filesize')
+        with patch.object(client, 'rows', return_value=[row]):
+            self.assertEqual(client.reconcile(TARGET['mod_id'], entry), row)
+
+    def test_reconcile_rejects_wrong_or_ambiguous_files(self):
+        client = Client(5892, 'test-oauth-secret')
+        entry = {'md5': 'ab' * 16, 'target_platform': 'xboxone',
+                 'create_started': 1000, 'filesize': 123}
+        row = {'id': 42, 'mod_id': TARGET['mod_id'], 'filehash': {'md5': 'ab' * 16},
+               'date_added': 1001, 'filesize': 123, 'platforms': [{'platform': 'xboxone'}]}
+        for changes in ({'mod_id': 99}, {'filehash': {'md5': 'cd' * 16}},
+                        {'platforms': [{'platform': 'ps4'}]}, {'date_added': 699},
+                        {'filesize': 124}):
+            with self.subTest(changes=changes), patch.object(client, 'rows', return_value=[{**row, **changes}]):
+                self.assertIsNone(client.reconcile(TARGET['mod_id'], entry))
+        with patch.object(client, 'rows', return_value=[row, {**row, 'id': 43}]):
+            self.assertIsNone(client.reconcile(TARGET['mod_id'], entry))
+
+    def test_reconcile_requires_every_requested_platform(self):
+        client = Client(5892, 'test-oauth-secret')
+        entry = {'md5': 'ab' * 16, 'target_platforms': ['ps4', 'ps5'],
+                 'create_started': 1000, 'filesize': 123}
+        row = {'id': 42, 'mod_id': TARGET['mod_id'], 'filehash': {'md5': entry['md5']},
+               'date_added': 1001, 'filesize': 123}
+        for platforms, matches in ((['ps4'], False), (['ps5'], False),
+                                   (['ps5', 'ps4'], True), (['ps4', 'ps5', 'windows'], True)):
+            result = {**row, 'platforms': [{'platform': p} for p in platforms]}
+            with self.subTest(platforms=platforms), patch.object(client, 'rows', return_value=[result]):
+                self.assertEqual(client.reconcile(TARGET['mod_id'], entry), result if matches else None)
+
+    def test_modfile_lookup_checks_ids_and_uses_only_get(self):
+        client = Client(5892, 'test-oauth-secret')
+        row = {'id': 42, 'mod_id': TARGET['mod_id'], 'platforms': []}
+        with patch.object(client, 'get', return_value=row) as get:
+            self.assertEqual(client.modfile(TARGET['mod_id'], 42), row)
+        get.assert_called_once_with('/games/5892/mods/6214018/files/42')
+        for wrong in ({'id': 41}, {'mod_id': 99}):
+            with patch.object(client, 'get', return_value={**row, **wrong}), self.assertRaises(ApiError):
+                client.modfile(TARGET['mod_id'], 42)
+
+    def test_partial_platform_response_keeps_id_and_never_duplicates(self):
+        self.fixture(('playstation',))
+        client = FakeClient()
+        original = client.add_file
+        def only_ps4(*args, **kwargs):
+            result = original(*args, **kwargs)
+            result['platforms'] = [{'platform': 'ps4'}]
+            return result
+        with patch.object(client, 'add_file', side_effect=only_ps4):
+            first = upload_run(self.directory, self.state, TARGET, client)
+        self.assertEqual(first['status'], 'NEEDS_REVIEW')
+        self.assertEqual(first['files'][0]['modfile_id'], 101)
+        self.assertEqual(first['files'][0]['uploaded_platforms'], ['ps4'])
+        self.assertIn('PS5', first['files'][0]['message'])
+        retry = upload_run(self.directory, self.state, TARGET, client)
+        self.assertEqual(retry['status'], 'NEEDS_REVIEW')
+        self.assertEqual(client.created, ['playstation'])
+        # The user adds PS5 to this existing file; a read confirms it on retry.
+        client.server[0]['platforms'].append({'platform': 'ps5'})
+        retry = upload_run(self.directory, self.state, TARGET, client)
+        self.assertEqual(retry['status'], 'UPLOADED')
+        self.assertEqual(client.created, ['playstation'])
+        self.assertIn('PS4 + PS5', Path(retry['report_path']).read_text(encoding='utf-8'))
+
+    def legacy_entry(self, status='UPLOADED'):
+        jobs = self.fixture(('xbox',))
+        path = Path(jobs[0]['archive'])
+        entry = {'platform': 'xbox', 'target_platform': 'xboxone', 'status': status,
+                 'md5': hashlib.md5(path.read_bytes()).hexdigest(), 'create_started': 1000,
+                 'filename': path.name, 'sha256': jobs[0]['archive_sha256']}
+        if status == 'UPLOADED':
+            entry['modfile_id'] = 77
+        key = f'5892:6214018:xbox:{entry["sha256"]}'
+        journal = {'schema_version': 1, 'entries': {key: entry}}
+        write_json(self.state / 'modio-uploads.json', journal)
+        return entry
+
+    def test_legacy_upload_already_assigned_to_both_is_not_sent_again(self):
+        self.legacy_entry()
+        client = FakeClient()
+        client.server = [{'id': 77, 'mod_id': TARGET['mod_id'],
+                          'platforms': [{'platform': 'xboxone'}, {'platform': 'xboxseriesx'}]}]
+        result = upload_run(self.directory, self.state, TARGET, client)
+        self.assertEqual(result['status'], 'UPLOADED')
+        self.assertEqual(result['files'][0]['uploaded_platforms'], ['xboxone', 'xboxseriesx'])
+        self.assertFalse(client.created)
+
+    def test_legacy_lookup_failure_preserves_uploaded_id_and_original_journal_status(self):
+        self.legacy_entry()
+        client = FakeClient()
+        with patch.object(client, 'modfile', side_effect=ApiError('Timeout')):
+            for _ in range(2):
+                result = upload_run(self.directory, self.state, TARGET, client)
+                self.assertEqual(result['status'], 'NEEDS_REVIEW')
+        journal = json.loads((self.state / 'modio-uploads.json').read_text(encoding='utf-8'))
+        entry = next(iter(journal['entries'].values()))
+        self.assertEqual((entry['status'], entry['modfile_id']), ('UPLOADED', 77))
+        self.assertFalse(client.created)
+
+    def test_legacy_uncertain_post_keeps_original_targets_until_reconciled(self):
+        self.legacy_entry('UNCERTAIN')
+        client = FakeClient()
+        def reconcile(mod_id, entry):
+            self.assertEqual(target_platforms(entry), ('xboxone',))
+            return {'id': 77, 'mod_id': mod_id, 'platforms': [{'platform': 'xboxone'}]}
+        with patch.object(client, 'reconcile', side_effect=reconcile):
+            result = upload_run(self.directory, self.state, TARGET, client)
+        self.assertEqual(result['status'], 'NEEDS_REVIEW')
+        self.assertEqual(result['files'][0]['modfile_id'], 77)
+        self.assertFalse(client.created)
+
+    def test_legacy_failed_upload_adopts_both_targets(self):
+        self.legacy_entry('FAILED')
+        client = FakeClient()
+        result = upload_run(self.directory, self.state, TARGET, client)
+        self.assertEqual(result['status'], 'UPLOADED')
+        self.assertEqual(result['files'][0]['uploaded_platforms'], ['xboxone', 'xboxseriesx'])
+        self.assertEqual(client.created, ['xbox'])
 
     def test_modified_archive_and_failed_build_never_upload(self):
         jobs = self.fixture(('steam', 'xbox'))
@@ -159,23 +300,28 @@ class ModioTests(unittest.TestCase):
             upload_run(self.directory, self.state, TARGET, client, overrides={'steam': ''})
         self.assertFalse(client.created)
 
-    def test_wire_payload_always_inactive_and_correct_platform(self):
+    def test_wire_payload_always_inactive_and_correct_platforms(self):
         path = self.root / 'map.zip'
         path.write_bytes(b'fixture')
         client = Client(5892, 'test-oauth-secret')
-        for platform in ('windows', 'ps4', 'xboxone'):
+        for platforms in PLATFORMS.values():
             for multipart in (False, True):
                 captured = {}
                 def request(method, endpoint, *, body, headers):
                     captured.update(method=method, endpoint=endpoint, body=b''.join(body), headers=headers)
                     return {'id': 42, 'mod_id': 6214018}
                 with patch.object(client, 'request', side_effect=request):
-                    client.add_file(6214018, {'target_platform': platform, 'md5': 'a'*32},
+                    client.add_file(6214018, {'target_platforms': list(platforms), 'md5': 'a'*32},
                                     path=None if multipart else path, upload_id='session' if multipart else None)
                 data = captured['body'].decode()
                 self.assertIn('name="active"\r\n\r\nfalse\r\n', data)
                 self.assertNotIn('true', data)
-                self.assertIn('name="platforms[]"\r\n\r\n' + platform + '\r\n', data)
+                self.assertEqual(data.count('name="platforms[]"'), len(platforms))
+                for platform in platforms:
+                    self.assertIn('name="platforms[]"\r\n\r\n' + platform + '\r\n', data)
+                self.assertEqual(data.count('name="filedata"'), 0 if multipart else 1)
+                self.assertEqual(data.count('name="upload_id"'), 1 if multipart else 0)
+                self.assertEqual(captured['method'], 'POST')
                 self.assertNotIn('name="version"', data)
                 self.assertNotIn('name="changelog"', data)
                 self.assertEqual(int(captured['headers']['Content-Length']), len(captured['body']))
